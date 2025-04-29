@@ -1,0 +1,14 @@
+[
+    {
+      "model": "order.OrderItem",
+      "pk": 1,
+      "fields": {
+        "order": "c3a8baf0-bf2e-4a0f-b70b-729c3d934e34",
+        "job": 1,
+        "quantity": 1,
+        "price": "150.00",
+        "total_price": "150.00"
+      }
+    }
+  ]
+  

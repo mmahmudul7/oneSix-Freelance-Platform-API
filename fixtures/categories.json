@@ -1,0 +1,11 @@
+[
+    {
+      "model": "job.category",
+      "pk": 1,
+      "fields": {
+        "name": "Web Development",
+        "description": "All jobs related to web development"
+      }
+    }
+  ]
+  

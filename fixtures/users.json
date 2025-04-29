@@ -1,0 +1,17 @@
+[
+    {
+      "model": "users.user",
+      "pk": 1,
+      "fields": {
+        "email": "hasan@example.com",
+        "password": "pbkdf2_sha256$600000$uYNU29eMZ0Id$Rqxtb0UJhDL1+c+WJz2WnRSzUMpTWr/PR4ZrMUVjaHg=",
+        "first_name": "Hasan",
+        "last_name": "Ahmed",
+        "address": "Rajshahi, Bangladesh",
+        "phone_number": "+8801712345678",
+        "is_active": true,
+        "is_staff": false
+      }
+    }
+  ]
+  

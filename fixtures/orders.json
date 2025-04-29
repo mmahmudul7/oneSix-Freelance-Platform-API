@@ -1,0 +1,13 @@
+[
+    {
+      "model": "order.orderitem",
+      "pk": 1,
+      "fields": {
+        "order": "eed9d5be-9a92-4665-b00c-978a7ec6d4f5",
+        "job": 20,
+        "price": "107.89",
+        "total_price": "107.89"
+      }
+    }
+  ]
+  
