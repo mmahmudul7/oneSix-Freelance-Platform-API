@@ -4,7 +4,7 @@ from job.models import Category, Job
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    job_count = serializers.IntegerField()
+    job_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Category
