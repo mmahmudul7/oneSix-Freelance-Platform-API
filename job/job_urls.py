@@ -3,6 +3,6 @@ from job import views
 
 
 urlpatterns = [
-    path('', views.ViewJobs.as_view(), name='job-list'),
-    path('<int:id>/', views.ViewSpecificJob.as_view(), name='job-list'),
+    path('', views.JobList.as_view(), name='job-list'),
+    path('<int:pk>/', views.JobDetails.as_view(), name='job-list'),
 ]
