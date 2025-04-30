@@ -8,7 +8,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 
 
 class JobList(ListCreateAPIView):
-    queryset = Job.objects.select_related('category').all()
+    queryset = Job.objects.all()
     serializer_class = JobSerializer
 
 
