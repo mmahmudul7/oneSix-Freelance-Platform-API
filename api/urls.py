@@ -3,7 +3,7 @@ from job.views import JobViewSet, CategoryViewSet, ReviewViewSet
 from rest_framework_nested import routers
 
 router = routers.DefaultRouter()
-router.register('jobs', JobViewSet)
+router.register('jobs', JobViewSet, basename='jobs')
 router.register('categories', CategoryViewSet)
 
 job_router = routers.NestedDefaultRouter(router, 'jobs', lookup='job')

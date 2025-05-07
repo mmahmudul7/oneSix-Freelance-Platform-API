@@ -4,11 +4,15 @@ from job.models import Job, Category, Review
 from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
+from django_filters.rest_framework import DjangoFilterBackend
+from job.filters import JobFilter
 
 
 class JobViewSet(ModelViewSet):
-    queryset = Job.objects.all()
     serializer_class = JobSerializer
+    queryset = Job.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = JobFilter
 
     def destroy(self, request, *args, **kwargs):
         job = self.get_object()
