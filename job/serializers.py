@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
-from job.models import Category, Job
+from job.models import Category, Job, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -25,3 +25,14 @@ class JobSerializer(serializers.ModelSerializer):
         if price < 0:
             raise serializers.ValidationError('Price could not be negative')
         return price
+    
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'comment']
+
+    def create(self, validated_data):
+        job_id = self.context['job_id']
+        return Review.objects.create(job_id=job_id, **validated_data)
+    

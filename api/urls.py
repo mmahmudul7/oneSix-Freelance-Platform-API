@@ -1,14 +1,17 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from job.views import JobViewSet, CategoryViewSet
+from job.views import JobViewSet, CategoryViewSet, ReviewViewSet
+from rest_framework_nested import routers
 
-router = DefaultRouter()
+router = routers.DefaultRouter()
 router.register('jobs', JobViewSet)
 router.register('categories', CategoryViewSet)
 
-urlpatterns = router.urls
+job_router = routers.NestedDefaultRouter(router, 'jobs', lookup='job')
+job_router.register('reviews', ReviewViewSet, basename='job-review')
 
-# urlpatterns = [
-#     path('', include('router.urls')),
-#     path('contact/'),
-# ]
+# urlpatterns = router.urls
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('', include(job_router.urls)),
+]

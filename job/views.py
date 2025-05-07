@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
-from job.models import Job, Category
-from job.serializers import JobSerializer, CategorySerializer
+from job.models import Job, Category, Review
+from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 
@@ -23,3 +23,15 @@ class JobViewSet(ModelViewSet):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.annotate(job_count=Count('jobs')).prefetch_related('jobs')
     serializer_class = CategorySerializer
+
+
+class ReviewViewSet(ModelViewSet):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        return Review.objects.filter(job_id=self.kwargs['job_pk'])
+
+    def get_serializer_context(self):
+        return {'job_id': self.kwargs['job_pk']}
+
+

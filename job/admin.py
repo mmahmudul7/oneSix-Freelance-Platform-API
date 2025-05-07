@@ -23,6 +23,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ("job", "user", "ratings", "created_at")
-    list_filter = ("ratings",)
+    # list_display = ("job", "user", "ratings", "created_at")
+    list_display = ("job", "user", "created_at")
+    # list_filter = ("ratings",)
     search_fields = ("job__name", "user__first_name")
