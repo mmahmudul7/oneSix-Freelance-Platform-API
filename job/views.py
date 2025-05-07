@@ -7,6 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from job.filters import JobFilter
 from rest_framework.filters import SearchFilter, OrderingFilter
+from job.paginations import DefaultPagination
 
 
 class JobViewSet(ModelViewSet):
@@ -14,6 +15,7 @@ class JobViewSet(ModelViewSet):
     queryset = Job.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = JobFilter
+    pagination_class = DefaultPagination
     search_fields = ['name', 'description']
     ordering_fields = ['price']
 
