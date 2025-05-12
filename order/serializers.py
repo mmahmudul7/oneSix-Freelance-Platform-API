@@ -36,6 +36,12 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         return value
 
 
+class UpdateCartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['quantity']
+
+        
 class CartItemSerializer(serializers.ModelSerializer):
     job = SimpleJobSerializer()
     total_price = serializers.SerializerMethodField(method_name='get_total_price')
