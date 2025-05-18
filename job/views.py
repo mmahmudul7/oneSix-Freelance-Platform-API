@@ -8,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from job.filters import JobFilter
 from rest_framework.filters import SearchFilter, OrderingFilter
 from job.paginations import DefaultPagination
+from api.permissions import IsAdminOrReadOnly
 
 
 class JobViewSet(ModelViewSet):
@@ -18,6 +19,7 @@ class JobViewSet(ModelViewSet):
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
     ordering_fields = ['price']
+    permission_classes = [IsAdminOrReadOnly]
 
     def destroy(self, request, *args, **kwargs):
         job = self.get_object()
@@ -30,6 +32,7 @@ class JobViewSet(ModelViewSet):
 
 
 class CategoryViewSet(ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
     queryset = Category.objects.annotate(job_count=Count('jobs')).prefetch_related('jobs')
     serializer_class = CategorySerializer
 
