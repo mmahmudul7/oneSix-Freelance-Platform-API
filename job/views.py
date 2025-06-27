@@ -9,6 +9,7 @@ from job.filters import JobFilter
 from rest_framework.filters import SearchFilter, OrderingFilter
 from job.paginations import DefaultPagination
 from api.permissions import IsAdminOrReadOnly
+from rest_framework.permissions import DjangoModelPermissions, DjangoModelPermissionsOrAnonReadOnly
 
 
 class JobViewSet(ModelViewSet):
@@ -19,6 +20,8 @@ class JobViewSet(ModelViewSet):
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
     ordering_fields = ['price']
+    # permission_classes = [DjangoModelPermissions]
+    # permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
     permission_classes = [IsAdminOrReadOnly]
 
     def destroy(self, request, *args, **kwargs):
