@@ -61,14 +61,28 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ['id', 'user', 'items', 'total_price']
+        read_only_fields = ['user']
 
     def get_total_price(self, cart: Cart):
         return sum([item.job.price * item.quantity for item in cart.items.all()])
-    
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+
+    def validate_cart_id(self, cart_id):
+        if not Cart.objects.filter(pk=cart_id).exists():
+            raise serializers.ValidationError('No cart found with this id')
+        
+        if not CartItem.objects.filter(cart_id=cart_id).exists():
+            raise serializers.ValidationError('Cart is empty')
+        
+        return cart_id
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
     job = SimpleJobSerializer()
-    
+
     class Meta:
         model = OrderItem
         fields = ['id', 'job', 'price', 'quantity', 'total_price']
