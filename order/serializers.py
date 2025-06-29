@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from order.models import Cart, CartItem, Order, OrderItem
 from job.models import Job
+from order.services import OrderService
 
 
 class SimpleJobSerializer(serializers.ModelSerializer):
@@ -83,30 +84,11 @@ class CreateOrderSerializer(serializers.Serializer):
         user_id = self.context['user_id']
         cart_id = validated_data['cart_id']
 
-        cart = Cart.objects.get(pk=cart_id)
-        cart_items = cart.items.select_related('job').all()
-
-        total_price = sum([item.job.price * item.quantity for item in cart_items])
-
-        order = Order.objects.create(user_id=user_id, total_price=total_price)
-
-        order_items = [
-            OrderItem(
-                order = order,
-                job = item.job,
-                # freelancer = item.freelancer,
-                price = item.job.price,
-                quantity = item.quantity,
-                total_price = item.job.price * item.quantity
-            )
-            for item in cart_items
-        ]
-
-        OrderItem.objects.bulk_create(order_items)
-
-        cart.delete()
-
-        return order
+        try:
+            order = OrderService.create_order(user_id=user_id, cart_id=cart_id)
+            return order
+        except ValueError as e:
+            raise serializers.ValidationError(str(e))
 
     def to_representation(self, instance):
         return OrderSerializer(instance).data
