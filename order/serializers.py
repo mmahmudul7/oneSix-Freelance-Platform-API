@@ -102,6 +102,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'job', 'price', 'quantity', 'total_price']
 
 
+class UpdateOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many = True)
 
