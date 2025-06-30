@@ -33,6 +33,7 @@ class Job(models.Model):
 class JobImage(models.Model):
     product = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to="jobs/images/", validators=[validate_file_size])
+    # file = models.FileField(upload_to="jobs/files", validators=[FileExtensionValidator(['pdf'])])
     # image = CloudinaryField('image')
 
 

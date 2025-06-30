@@ -7,6 +7,7 @@ from job.filters import JobFilter
 from rest_framework.filters import SearchFilter, OrderingFilter
 from job.paginations import DefaultPagination
 from api.permissions import IsAdminOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from job.permissions import IsReviewAuthorOrReadOnly
 
 
@@ -23,6 +24,7 @@ class JobViewSet(ModelViewSet):
 
 class JobImageViewSet(ModelViewSet):
     serializer_class = JobImageSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return JobImage.objects.filter(product_id=self.kwargs['job_pk'])
