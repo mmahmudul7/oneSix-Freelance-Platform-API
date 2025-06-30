@@ -3,6 +3,7 @@ from rest_framework_nested import routers
 from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSet, JobPriceViewSet
 from order.views import CartViewSet, CartItemViewSet, OrderViewset
 from users.views import UserProfileViewSet, PortfolioViewSet
+from messaging.views import MessageViewSet, CustomOfferViewSet
 
 
 router = routers.DefaultRouter()
@@ -13,6 +14,8 @@ router.register('carts', CartViewSet, basename='carts')
 router.register('orders', OrderViewset, basename='orders')
 router.register('profiles', UserProfileViewSet, basename='profiles')
 router.register('portfolio', PortfolioViewSet, basename='portfolio')
+router.register('message', MessageViewSet, basename='message')
+router.register('custom-offers', CustomOfferViewSet, basename='custom-offers')
 
 job_router = routers.NestedDefaultRouter(router, 'jobs', lookup='job')
 job_router.register('reviews', ReviewViewSet, basename='job-review')

@@ -63,6 +63,45 @@ class OrderService:
 
             return order
         
+
+    @staticmethod
+    def create_custom_order(user, job, price, delivery_days, features):
+        with transaction.atomic():
+            if job.created_by == user:
+                raise ValidationError("You cannot order your own job.")
+            
+            total_price = price
+            order = Order.objects.create(user=user, total_price=total_price)
+            
+            OrderItem.objects.create(
+                order=order,
+                job=job,
+                price=price,
+                quantity=1,
+                total_price=total_price
+            )
+
+            # Send notification to buyer
+            send_mail(
+                subject='Custom Order Placed Successfully',
+                message=f'Dear {user.get_full_name() or user.email},\n\nYour custom order (ID: {order.id}) for "{job.name}" has been placed successfully.\nTotal Price: ${total_price}\nDelivery Days: {delivery_days}\nFeatures: {features}\n\nThank you!',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+
+            # Send notification to job creator
+            send_mail(
+                subject='Your Job Has Been Ordered (Custom Offer)',
+                message=f'Dear {job.created_by.get_full_name() or job.created_by.email},\n\nYour job "{job.name}" has been ordered by {user.get_full_name() or user.email} via a custom offer.\nOrder ID: {order.id}\nPrice: ${price}\nDelivery Days: {delivery_days}\nFeatures: {features}\n\nThank you!',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[job.created_by.email],
+                fail_silently=True,
+            )
+
+            return order
+
+        
     @staticmethod
     def cancel_order(order, user):
         if user.is_staff:

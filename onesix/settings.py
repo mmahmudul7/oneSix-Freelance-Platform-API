@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'users',
     'job',
     'order',
+    'messaging',
     'debug_toolbar',
 ]
 
