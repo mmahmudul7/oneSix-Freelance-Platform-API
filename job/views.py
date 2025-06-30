@@ -1,7 +1,5 @@
-from rest_framework.response import Response
-from rest_framework import status
-from job.models import Job, Category, Review
-from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer
+from job.models import Job, Category, Review, JobImage
+from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer, JobImageSerializer
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
@@ -22,14 +20,15 @@ class JobViewSet(ModelViewSet):
     ordering_fields = ['price']
     permission_classes = [IsAdminOrReadOnly]
 
-    def destroy(self, request, *args, **kwargs):
-        job = self.get_object()
-        if job.price > 499:
-            return Response({
-                'Message': "Job with price more then 499 could not be deleted"
-            })
-        self.perform_destroy(job)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class JobImageViewSet(ModelViewSet):
+    serializer_class = JobImageSerializer
+
+    def get_queryset(self):
+        return JobImage.objects.filter(product_id=self.kwargs['job_pk'])
+    
+    def perform_create(self, serializer):
+        serializer.save(product_id=self.kwargs['job_pk'])
 
 
 class CategoryViewSet(ModelViewSet):

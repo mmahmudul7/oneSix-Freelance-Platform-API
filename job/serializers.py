@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
-from job.models import Category, Job, Review
+from job.models import Category, Job, Review, JobImage
 from django.contrib.auth import get_user_model
 
 
@@ -26,7 +26,13 @@ class JobSerializer(serializers.ModelSerializer):
         if price < 0:
             raise serializers.ValidationError('Price could not be negative')
         return price
-    
+
+
+class JobImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobImage
+        fields = ['id', 'image']
+
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField(method_name='get_current_user_name')

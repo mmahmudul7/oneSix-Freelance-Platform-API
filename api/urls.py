@@ -1,5 +1,5 @@
 from django.urls import path, include
-from job.views import JobViewSet, CategoryViewSet, ReviewViewSet
+from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSet
 from order.views import CartViewSet, CartItemViewSet, OrderViewset
 from rest_framework_nested import routers
 
@@ -12,6 +12,7 @@ router.register('orders', OrderViewset, basename='orders')
 
 job_router = routers.NestedDefaultRouter(router, 'jobs', lookup='job')
 job_router.register('reviews', ReviewViewSet, basename='job-review')
+job_router.register('images', JobImageViewSet, basename='job-images')
 
 cart_router = routers.NestedDefaultRouter(router, 'carts', lookup='cart')
 cart_router.register('items', CartItemViewSet, basename='cart-item')
