@@ -21,10 +21,16 @@ class JobImageSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     cart_price = serializers.SerializerMethodField(method_name='calculate_cart')
     images = JobImageSerializer(many=True)
+
+    def validate_duration_days(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Duration must be at least 1 day.")
+        return value
     
     class Meta:
         model = Job
-        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images']
+        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'created_at', 'updated_at']
+        read_only_fields = ['created_by', 'created_at', 'updated_at']
 
     def calculate_cart(self, job):
         return round(job.price * Decimal(1.16), 2)

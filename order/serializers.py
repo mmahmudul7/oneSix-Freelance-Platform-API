@@ -11,7 +11,7 @@ class EmptySerializer(serializers.Serializer):
 class SimpleJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
-        fields = ['id', 'name', 'price']
+        fields = ['id', 'name', 'price', 'duration_days']
 
 
 class AddCartItemSerializer(serializers.ModelSerializer):
@@ -53,7 +53,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'job', 'quantity', 'job', 'total_price']
+        fields = ['id', 'job', 'quantity', 'total_price']
 
     def get_total_price(self, cart_item: CartItem):
         return cart_item.quantity * cart_item.job.price
@@ -117,4 +117,5 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'status', 'total_price', 'created_at', 'items']
+        fields = ['id', 'user', 'status', 'total_price', 'deadline', 'created_at', 'items']
+        read_only_fields = ['user', 'deadline', 'created_at']
