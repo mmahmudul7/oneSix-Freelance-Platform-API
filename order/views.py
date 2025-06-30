@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from order.services import OrderService
 from rest_framework.response import Response
-# Create your views here.
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
@@ -31,7 +30,7 @@ class CartItemViewSet(ModelViewSet):
         return orderSz.CartItemSerializer
     
     def get_serializer_context(self):
-        return {'cart_id': self.kwargs['cart_pk']}
+        return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}
 
     def get_queryset(self):
         return CartItem.objects.select_related('job').filter(cart_id=self.kwargs['cart_pk'])

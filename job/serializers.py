@@ -11,6 +11,12 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name', 'description', 'job_count']
 
+    def validate_name(self, value):
+        # Ensure category name is unique
+        if Category.objects.filter(name=value).exists():
+            raise serializers.ValidationError("A category with this name already exists.")
+        return value
+
 
 class JobImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +26,8 @@ class JobImageSerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     cart_price = serializers.SerializerMethodField(method_name='calculate_cart')
-    images = JobImageSerializer(many=True)
+    images = JobImageSerializer(many=True, read_only=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
     def validate_duration_days(self, value):
         if value < 1:
@@ -30,7 +37,7 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'created_at', 'updated_at']
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
+        read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price']
 
     def calculate_cart(self, job):
         return round(job.price * Decimal(1.16), 2)

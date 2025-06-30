@@ -5,11 +5,12 @@ from job.models import Job
 from uuid import uuid4
 from datetime import timedelta
 from django.utils import timezone
+from django.conf import settings
 
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="cart")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

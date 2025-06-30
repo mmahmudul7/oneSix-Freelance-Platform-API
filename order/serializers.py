@@ -38,6 +38,10 @@ class AddCartItemSerializer(serializers.ModelSerializer):
     def validate_job_id(self, value):
         if not Job.objects.filter(pk=value).exists():
             raise serializers.ValidationError(f"Job with id {value} does not exists")
+        job = Job.objects.get(pk=value)
+        user = self.context['request'].user
+        if job.created_by == user:
+            raise serializers.ValidationError("You cannot add your own job to the cart")
         return value
 
 
@@ -114,6 +118,7 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many = True)
+    deadline = serializers.DateField(read_only=True)
 
     class Meta:
         model = Order

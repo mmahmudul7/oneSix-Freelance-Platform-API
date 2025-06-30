@@ -13,7 +13,7 @@ from job.permissions import IsReviewAuthorOrReadOnly
 
 class JobViewSet(ModelViewSet):
     serializer_class = JobSerializer
-    queryset = Job.objects.all()
+    queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images')
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = JobFilter
     pagination_class = DefaultPagination
@@ -21,16 +21,22 @@ class JobViewSet(ModelViewSet):
     ordering_fields = ['price']
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)  # Ensure created_by is set to current user
+
+    def perform_update(self, serializer):
+        serializer.save(created_by=self.request.user)  # Ensure created_by is not changed on update
+
 
 class JobImageViewSet(ModelViewSet):
     serializer_class = JobImageSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return JobImage.objects.filter(product_id=self.kwargs['job_pk'])
+        return JobImage.objects.filter(job_id=self.kwargs['job_pk'])
     
     def perform_create(self, serializer):
-        serializer.save(product_id=self.kwargs['job_pk'])
+        serializer.save(job_id=self.kwargs['job_pk'])
 
 
 class CategoryViewSet(ModelViewSet):
