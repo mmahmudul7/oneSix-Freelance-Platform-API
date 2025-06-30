@@ -1,5 +1,5 @@
-from job.models import Job, Category, Review, JobImage
-from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer, JobImageSerializer
+from job.models import Job, Category, Review, JobImage, JobPrice
+from job.serializers import JobSerializer, CategorySerializer, ReviewSerializer, JobImageSerializer, JobPriceSerializer
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
@@ -53,6 +53,12 @@ class CategoryViewSet(ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     queryset = Category.objects.annotate(job_count=Count('jobs')).prefetch_related('jobs')
     serializer_class = CategorySerializer
+
+
+class JobPriceViewSet(ModelViewSet):
+    permission_classes = [IsAdminOrReadOnly]
+    queryset = JobPrice.objects.all()
+    serializer_class = JobPriceSerializer
 
 
 class ReviewViewSet(ModelViewSet):

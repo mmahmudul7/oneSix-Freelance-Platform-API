@@ -1,12 +1,13 @@
 from django.urls import path, include
-from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSet
-from order.views import CartViewSet, CartItemViewSet, OrderViewset
 from rest_framework_nested import routers
+from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSet, JobPriceViewSet
+from order.views import CartViewSet, CartItemViewSet, OrderViewset
 
 
 router = routers.DefaultRouter()
-router.register('jobs', JobViewSet, basename='jobs')
 router.register('categories', CategoryViewSet)
+router.register('jobs', JobViewSet, basename='jobs')
+router.register('job-price', JobPriceViewSet, basename='job-price')
 router.register('carts', CartViewSet, basename='carts')
 router.register('orders', OrderViewset, basename='orders')
 
