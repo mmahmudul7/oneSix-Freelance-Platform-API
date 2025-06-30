@@ -1,6 +1,8 @@
 from order.models import Cart, Order, OrderItem
 from django.db import transaction
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class OrderService:
@@ -12,6 +14,8 @@ class OrderService:
                 raise PermissionDenied("You can only create an order from your own cart")
             
             cart_items = cart.items.select_related('job').all()
+            if not cart_items:
+                raise ValidationError("Cart is empty")
 
             # Validate that user is not buying their own jobs
             for item in cart_items:
@@ -34,6 +38,26 @@ class OrderService:
             ]
 
             OrderItem.objects.bulk_create(order_items)
+
+            # Send notification to buyer
+            send_mail(
+                subject='Order Placed Successfully',
+                message=f'Dear {user.get_full_name() or user.email},\n\nYour order (ID: {order.id}) has been placed successfully.\nTotal Price: ${total_price}\n\nThank you!',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+
+            # Send notification to job creators
+            job_creators = set(item.job.created_by for item in cart_items)
+            for creator in job_creators:
+                send_mail(
+                    subject='Your Job Has Been Ordered',
+                    message=f'Dear {creator.get_full_name() or creator.email},\n\nYour job "{item.job.name}" has been ordered by {user.get_full_name() or user.email}.\nOrder ID: {order.id}\n\nThank you!',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[creator.email],
+                    fail_silently=True,
+                )
 
             cart.delete()
 

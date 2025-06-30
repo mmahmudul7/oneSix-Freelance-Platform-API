@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
-from job.models import Category, Job, Review, JobImage
+from job.models import Category, Job, Review, JobImage, JobPrice
 from django.contrib.auth import get_user_model
 
 
@@ -24,10 +24,17 @@ class JobImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image']
 
 
+class JobPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobPrice
+        fields = ['id', 'price']
+
+
 class JobSerializer(serializers.ModelSerializer):
     cart_price = serializers.SerializerMethodField(method_name='calculate_cart')
     images = JobImageSerializer(many=True, read_only=True)
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
+    price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
 
     def validate_duration_days(self, value):
         if value < 1:
@@ -40,11 +47,11 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price']
 
     def calculate_cart(self, job):
-        return round(job.price * Decimal(1.16), 2)
+        return round(job.price.price * Decimal(1.16), 2)
     
     def validate_price(self, price):
-        if price < 0:
-            raise serializers.ValidationError('Price could not be negative')
+        if not JobPrice.objects.filter(pk=price.id).exists():
+            raise serializers.ValidationError("Invalid price selected")
         return price
 
 
@@ -73,4 +80,3 @@ class ReviewSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         job_id = self.context['job_id']
         return Review.objects.create(job_id=job_id, **validated_data)
-    

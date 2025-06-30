@@ -9,6 +9,8 @@ from job.paginations import DefaultPagination
 from api.permissions import IsAdminOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from job.permissions import IsReviewAuthorOrReadOnly
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class JobViewSet(ModelViewSet):
@@ -22,7 +24,15 @@ class JobViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)  # Ensure created_by is set to current user
+        job = serializer.save(created_by=self.request.user)
+        # Send notification to job creator
+        send_mail(
+            subject='Job Created Successfully',
+            message=f'Dear {self.request.user.get_full_name() or self.request.user.email},\n\nYour job "{job.name}" has been created successfully.\n\nThank you!',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[self.request.user.email],
+            fail_silently=True,
+        )
 
     def perform_update(self, serializer):
         serializer.save(created_by=self.request.user)  # Ensure created_by is not changed on update
@@ -60,5 +70,3 @@ class ReviewViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         return {'job_id': self.kwargs['job_pk']}
-
-

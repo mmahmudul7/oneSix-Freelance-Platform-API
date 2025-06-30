@@ -146,3 +146,13 @@ DJOSER = {
         'current_user': 'users.serializers.UserSerializer',
     }
 }
+
+
+# Email configuration for notifications
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Use SMTP in production
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Replace with your app-specific password
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'  # Replace with your email
