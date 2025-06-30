@@ -12,12 +12,19 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'job_count']
 
 
+class JobImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobImage
+        fields = ['id', 'image']
+
+
 class JobSerializer(serializers.ModelSerializer):
     cart_price = serializers.SerializerMethodField(method_name='calculate_cart')
+    images = JobImageSerializer(many=True)
     
     class Meta:
         model = Job
-        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price']
+        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images']
 
     def calculate_cart(self, job):
         return round(job.price * Decimal(1.16), 2)
@@ -26,12 +33,6 @@ class JobSerializer(serializers.ModelSerializer):
         if price < 0:
             raise serializers.ValidationError('Price could not be negative')
         return price
-
-
-class JobImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobImage
-        fields = ['id', 'image']
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
