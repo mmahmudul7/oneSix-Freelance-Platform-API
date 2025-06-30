@@ -2,13 +2,13 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from messaging.models import Message, CustomOffer
-from messaging.serializers import MessageSerializer, CustomOfferSerializer
+from django.db import models
+from .models import Message, CustomOffer
+from .serializers import MessageSerializer, CustomOfferSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 from order.services import OrderService
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from django.db import models
 from django.db import transaction
 
 
@@ -25,9 +25,10 @@ class MessageViewSet(ModelViewSet):
     def perform_create(self, serializer):
         message = serializer.save(sender=self.request.user)
         # Send email notification to receiver
+        file_info = f"\nAttachment: {message.file.url}" if message.file else ""
         send_mail(
             subject=f'New Message from {self.request.user.get_full_name() or self.request.user.email}',
-            message=f'You have received a new message regarding "{message.job.name if message.job else "General"}":\n\n{message.content}',
+            message=f'You have received a new message regarding "{message.job.name if message.job else "General"}":\n\n{message.content}{file_info}\n\nPlease check your inbox.',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[message.receiver.email],
             fail_silently=True,
@@ -114,3 +115,4 @@ class CustomOfferViewSet(ModelViewSet):
         )
         
         return Response({'status': 'Offer rejected'})
+    

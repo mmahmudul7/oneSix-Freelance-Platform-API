@@ -7,6 +7,7 @@ class Message(models.Model):
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='received_messages', on_delete=models.CASCADE)
     job = models.ForeignKey('job.Job', on_delete=models.CASCADE, blank=True, null=True)
     content = models.TextField()
+    file = models.FileField(upload_to='message_files', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
