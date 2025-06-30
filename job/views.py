@@ -19,7 +19,7 @@ class JobViewSet(ModelViewSet):
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
     ordering_fields = ['price']
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
 
 class JobImageViewSet(ModelViewSet):

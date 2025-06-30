@@ -20,6 +20,8 @@ class Job(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="jobs")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="created_jobs")
+    duration_days = models.PositiveIntegerField(validators=[MinValueValidator(1)], help_text="Number of days required to complete the job") 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -31,7 +33,7 @@ class Job(models.Model):
     
 
 class JobImage(models.Model):
-    product = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='images')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to="jobs/images/", validators=[validate_file_size])
     # file = models.FileField(upload_to="jobs/files", validators=[FileExtensionValidator(['pdf'])])
     # image = CloudinaryField('image')
