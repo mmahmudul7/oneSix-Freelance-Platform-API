@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from order.models import Cart, CartItem, Order, OrderItem
+from order.models import Cart, CartItem, Order, OrderItem, OrderDelivery
 from job.models import Job
 from order.services import OrderService
+from users.serializers import UserSerializer
 
 
 class EmptySerializer(serializers.Serializer):
@@ -52,7 +53,7 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
 
         
 class CartItemSerializer(serializers.ModelSerializer):
-    job = SimpleJobSerializer()
+    job = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all())
     total_price = serializers.SerializerMethodField(method_name='get_total_price')
 
     class Meta:
@@ -69,8 +70,8 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'items', 'total_price']
-        read_only_fields = ['user']
+        fields = ['id', 'user', 'items', 'total_price', 'created_at']
+        read_only_fields = ['user', 'created_at']
 
     def get_total_price(self, cart: Cart):
         return sum([item.job.price * item.quantity for item in cart.items.all()])
@@ -103,7 +104,7 @@ class CreateOrderSerializer(serializers.Serializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    job = SimpleJobSerializer()
+    job = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all())
 
     class Meta:
         model = OrderItem
@@ -114,13 +115,33 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['status']
+        read_only_fields = ['user', 'total_price', 'created_at', 'updated_at']
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many = True)
-    deadline = serializers.DateField(read_only=True)
+    items = OrderItemSerializer(many=True, read_only=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'status', 'total_price', 'deadline', 'created_at', 'items']
-        read_only_fields = ['user', 'deadline', 'created_at']
+        fields = ['id', 'user', 'total_price', 'status', 'created_at', 'updated_at', 'items']
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+
+class OrderDeliverySerializer(serializers.ModelSerializer):
+    delivered_by = UserSerializer(read_only=True)
+    order = serializers.PrimaryKeyRelatedField(queryset=Order.objects.all())
+
+    class Meta:
+        model = OrderDelivery
+        fields = ['id', 'order', 'file', 'description', 'delivered_by', 'delivered_at']
+        read_only_fields = ['delivered_by', 'delivered_at']
+
+    def validate(self, data):
+        order = data['order']
+        job_creator = order.items.first().job.created_by
+        if self.context['request'].user != job_creator:
+            raise serializers.ValidationError("Only the job creator can deliver this order.")
+        if order.status != Order.IN_PROGRESS:
+            raise serializers.ValidationError("Order must be in progress to deliver.")
+        return data

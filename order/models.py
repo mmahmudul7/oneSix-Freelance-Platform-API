@@ -30,27 +30,23 @@ class CartItem(models.Model):
 
 
 class Order(models.Model):
-    NOT_PAID = 'Not Paid'
-    ACCEPTED = 'Accepted'
-    IN_PROGRESS = 'In Progress'
-    SUBMITTED = 'Submitted'
-    COMPLETED = 'Completed'
-    CANCELED = 'Canceled'
+    PENDING = 'PENDING'
+    IN_PROGRESS = 'IN_PROGRESS'
+    DELIVERED = 'DELIVERED'
+    COMPLETED = 'COMPLETED'
+    CANCELED = 'CANCELED'
 
     STATUS_CHOICES = [
-        (NOT_PAID, 'Not Paid'),       # Created, waiting to be accepted
-        (ACCEPTED, 'Accepted'),       # Freelancer accepted job
-        (IN_PROGRESS, 'In Progress'), # Work started
-        (SUBMITTED, 'Submitted'),     # Submitted for approval
-        (COMPLETED, 'Completed'),     # Client approved
-        (CANCELED, 'Canceled'),       # Canceled any time
+        (PENDING, 'Pending'),
+        (IN_PROGRESS, 'In Progress'),
+        (DELIVERED, 'Delivered'),
+        (COMPLETED, 'Completed'),
+        (CANCELED, 'Canceled'),
     ]
 
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=NOT_PAID)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    deadline = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -76,3 +72,14 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.job.name} for Order {self.order.id}"
+    
+
+class OrderDelivery(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='deliveries')
+    file = models.FileField(upload_to='order_deliveries', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    delivered_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='delivered_orders')
+    delivered_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Delivery for Order {self.order.id} by {self.delivered_by.email}"
