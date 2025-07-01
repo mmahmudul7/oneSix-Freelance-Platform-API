@@ -4,10 +4,12 @@ from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSe
 from order.views import CartViewSet, CartItemViewSet, OrderDeliveryViewSet, OrderViewSet
 from users.views import UserProfileViewSet, PortfolioViewSet
 from messaging.views import MessageViewSet, CustomOfferViewSet
+from djoser.views import UserViewSet
 
 
 # Main router
 router = routers.DefaultRouter()
+router.register('users', UserViewSet, basename='users')
 router.register('categories', CategoryViewSet, basename='categories')
 router.register('jobs', JobViewSet, basename='jobs')
 router.register('job-price', JobPriceViewSet, basename='job-price')
@@ -28,9 +30,6 @@ cart_router = routers.NestedDefaultRouter(router, 'carts', lookup='cart')
 cart_router.register('items', CartItemViewSet, basename='cart-item')
 
 
-auth_router = routers.DefaultRouter()
-auth_router.registry.extend(router.registry)
-
 # urlpatterns = router.urls
 # Final URLs
 urlpatterns = [
@@ -39,6 +38,7 @@ urlpatterns = [
     path('', include(job_router.urls)),
     path('', include(cart_router.urls)),
 
+    path('auth/', include(router.urls)),
     # Djoser auth routes
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
