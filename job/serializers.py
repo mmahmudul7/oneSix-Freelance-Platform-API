@@ -35,6 +35,8 @@ class JobSerializer(serializers.ModelSerializer):
     images = JobImageSerializer(many=True, read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
     price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
+    average_rating = serializers.ReadOnlyField()
+    total_orders = serializers.ReadOnlyField()
 
     def validate_duration_days(self, value):
         if value < 1:
@@ -80,3 +82,16 @@ class ReviewSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         job_id = self.context['job_id']
         return Review.objects.create(job_id=job_id, **validated_data)
+    
+
+class JobSearchSerializer(serializers.Serializer):  # job search
+    keyword = serializers.CharField(required=False, allow_blank=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=False)
+    min_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    max_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    min_rating = serializers.FloatField(required=False)
+    max_duration_days = serializers.IntegerField(required=False)
+    sort_by = serializers.ChoiceField(
+        choices=['price_asc', 'price_desc', 'rating_desc', 'orders_desc'],
+        required=False
+    )

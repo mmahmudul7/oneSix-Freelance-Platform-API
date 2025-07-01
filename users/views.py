@@ -4,6 +4,8 @@ from users.models import User, Portfolio
 from users.serializers import UserSerializer, PortfolioSerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Q, Avg, Count
+from rest_framework.exceptions import PermissionDenied
 
 
 class UserProfileViewSet(ModelViewSet):
@@ -21,6 +23,39 @@ class UserProfileViewSet(ModelViewSet):
         if self.request.user != self.get_object():
             raise PermissionDenied("You can only update your own profile")
         serializer.save()
+
+    @action(detail=False, methods=['get'], permission_classes=[])  # Freelancer search
+    def search(self, request):
+        serializer = UserSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        queryset = User.objects.all()
+
+        # Apply filters
+        if data.get('keyword'):
+            queryset = queryset.filter(
+                Q(email__icontains=data['keyword']) |
+                Q(bio__icontains=data['keyword'])
+            )
+        if data.get('skills'):
+            queryset = queryset.filter(skills__contains=data['skills'])
+        if data.get('location'):
+            queryset = queryset.filter(location__icontains=data['location'])
+        if data.get('min_rating'):
+            queryset = queryset.annotate(avg_rating=Avg('created_jobs__reviews__ratings')).filter(avg_rating__gte=data['min_rating'])
+
+        # Apply sorting
+        sort_by = data.get('sort_by')
+        if sort_by == 'rating_desc':
+            queryset = queryset.annotate(avg_rating=Avg('created_jobs__reviews__ratings')).order_by('-avg_rating')
+        elif sort_by == 'orders_desc':
+            queryset = queryset.annotate(total_orders=Count('created_jobs__order_items')).order_by('-total_orders')
+        elif sort_by == 'created_at_desc':
+            queryset = queryset.order_by('-date_joined')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PortfolioViewSet(ModelViewSet):

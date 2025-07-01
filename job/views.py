@@ -11,6 +11,9 @@ from rest_framework.permissions import IsAuthenticated
 from job.permissions import IsReviewAuthorOrReadOnly
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.db.models import Q, Avg
 
 
 class JobViewSet(ModelViewSet):
@@ -20,7 +23,7 @@ class JobViewSet(ModelViewSet):
     filterset_class = JobFilter
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
-    ordering_fields = ['price']
+    ordering_fields = ['price', 'average_rating', 'total_orders']
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -35,7 +38,51 @@ class JobViewSet(ModelViewSet):
         )
 
     def perform_update(self, serializer):
-        serializer.save(created_by=self.request.user)  # Ensure created_by is not changed on update
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=False, methods=['get'], permission_classes=[])  # Search
+    def search(self, request):
+        serializer = JobSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images')
+
+        # Apply filters
+        if data.get('keyword'):
+            queryset = queryset.filter(
+                Q(name__icontains=data['keyword']) |
+                Q(description__icontains=data['keyword'])
+            )
+        if data.get('category'):
+            queryset = queryset.filter(category=data['category'])
+        if data.get('min_price'):
+            queryset = queryset.filter(price__price__gte=data['min_price'])
+        if data.get('max_price'):
+            queryset = queryset.filter(price__price__lte=data['max_price'])
+        if data.get('min_rating'):
+            queryset = queryset.annotate(avg_rating=Avg('reviews__ratings')).filter(avg_rating__gte=data['min_rating'])
+        if data.get('max_duration_days'):
+            queryset = queryset.filter(duration_days__lte=data['max_duration_days'])
+
+        # Apply sorting
+        sort_by = data.get('sort_by')
+        if sort_by == 'price_asc':
+            queryset = queryset.order_by('price__price')
+        elif sort_by == 'price_desc':
+            queryset = queryset.order_by('-price__price')
+        elif sort_by == 'rating_desc':
+            queryset = queryset.annotate(avg_rating=Avg('reviews__ratings')).order_by('-avg_rating')
+        elif sort_by == 'orders_desc':
+            queryset = queryset.annotate(total_orders=Count('order_items')).order_by('-total_orders')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class JobImageViewSet(ModelViewSet):

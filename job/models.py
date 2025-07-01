@@ -38,6 +38,17 @@ class Job(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def average_rating(self):  # Added for ranking by average review rating
+        reviews = self.reviews.all()
+        if reviews:
+            return sum(review.ratings for review in reviews) / reviews.count()
+        return 0
+
+    @property
+    def total_orders(self):  # Added for ranking by number of orders
+        return self.order_items.count()
 
 
 class JobImage(models.Model):

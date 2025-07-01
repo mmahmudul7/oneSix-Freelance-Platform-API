@@ -11,6 +11,7 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics', blank=True, null=True)
     skills = models.JSONField(blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)  # location-based search
 
     USERNAME_FIELD = 'email' # Use email instead of username
     REQUIRED_FIELDS = []
@@ -19,6 +20,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    @property
+    def average_rating(self):  # ranking by average review rating
+        reviews = self.created_jobs.values('reviews__ratings').aggregate(avg_rating=models.Avg('reviews__ratings'))
+        return reviews['avg_rating'] or 0
+
+    @property
+    def total_orders(self):  # ranking by number of orders
+        return self.created_jobs.aggregate(total_orders=models.Count('order_items'))['total_orders'] or 0
     
 
 class Portfolio(models.Model):
