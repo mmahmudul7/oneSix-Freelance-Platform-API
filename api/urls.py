@@ -6,8 +6,9 @@ from users.views import UserProfileViewSet, PortfolioViewSet
 from messaging.views import MessageViewSet, CustomOfferViewSet
 
 
+# Main router
 router = routers.DefaultRouter()
-router.register('categories', CategoryViewSet)
+router.register('categories', CategoryViewSet, basename='categories')
 router.register('jobs', JobViewSet, basename='jobs')
 router.register('job-price', JobPriceViewSet, basename='job-price')
 router.register('carts', CartViewSet, basename='carts')
@@ -18,6 +19,7 @@ router.register('message', MessageViewSet, basename='message')
 router.register('custom-offers', CustomOfferViewSet, basename='custom-offers')
 router.register('deliveries', OrderDeliveryViewSet, basename='deliveries')
 
+# nested router
 job_router = routers.NestedDefaultRouter(router, 'jobs', lookup='job')
 job_router.register('reviews', ReviewViewSet, basename='job-review')
 job_router.register('images', JobImageViewSet, basename='job-images')
@@ -25,12 +27,19 @@ job_router.register('images', JobImageViewSet, basename='job-images')
 cart_router = routers.NestedDefaultRouter(router, 'carts', lookup='cart')
 cart_router.register('items', CartItemViewSet, basename='cart-item')
 
-# urlpatterns = router.urls
 
+auth_router = routers.DefaultRouter()
+auth_router.registry.extend(router.registry)
+
+# urlpatterns = router.urls
+# Final URLs
 urlpatterns = [
+    # Main API root
     path('', include(router.urls)),
     path('', include(job_router.urls)),
     path('', include(cart_router.urls)),
+
+    # Djoser auth routes
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
 ]

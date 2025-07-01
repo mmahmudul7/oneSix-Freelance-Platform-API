@@ -45,8 +45,8 @@ class JobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Job
-        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'created_at', 'updated_at']
-        read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price']
+        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'total_orders', 'created_at', 'updated_at']
+        read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price', 'average_rating', 'total_orders']
 
     def calculate_cart(self, job):
         return round(job.price.price * Decimal(1.16), 2)

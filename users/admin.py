@@ -1,29 +1,16 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from users.models import User
-
-# Register your models here.
+from users.models import User, Portfolio
 
 
-class CustomUserAdmin(UserAdmin):
-    model = User
-    list_display = ('email', 'first_name', 'last_name', 'is_active')
-    list_filter = ('is_staff', 'is_active')
-    ordering = ['email']
-
-    fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Pesonal Info', {'fields': ('first_name', 'last_name', 'address', 'phone_number')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Important Dates', {'fields': ('last_login', 'date_joined')}),
-    )
-
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2', 'is_staff', 'is_active'),
-        }),
-    )
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['email', 'first_name', 'last_name', 'location', 'average_rating', 'total_orders']
+    search_fields = ['email', 'first_name', 'last_name', 'bio', 'location']
+    list_filter = ['location']
 
 
-admin.site.register(User, CustomUserAdmin)
+@admin.register(Portfolio)
+class PortfolioAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'created_at']
+    search_fields = ['title', 'description']
+    list_filter = ['user']
