@@ -12,12 +12,13 @@ from django.db import transaction
 from django.db import models
 
 
-
 class CartViewSet(ModelViewSet):
     serializer_class = orderSz.CartSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Cart.objects.none()
         return Cart.objects.prefetch_related('items__job').filter(user=self.request.user)
 
     def perform_create(self, serializer):
@@ -35,9 +36,13 @@ class CartItemViewSet(ModelViewSet):
         return orderSz.CartItemSerializer
     
     def get_serializer_context(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return {'request': self.request}
         return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return CartItem.objects.none()
         return CartItem.objects.select_related('job').filter(cart_id=self.kwargs['cart_pk'])
 
 
@@ -138,6 +143,9 @@ class OrderDeliveryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return OrderDelivery.objects.none()
+        
         user = self.request.user
         return OrderDelivery.objects.filter(
             models.Q(order__user=user) | models.Q(delivered_by=user)

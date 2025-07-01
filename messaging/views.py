@@ -17,6 +17,8 @@ class MessageViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
         # Users can only see messages they sent or received
         return Message.objects.filter(
             models.Q(sender=self.request.user) | models.Q(receiver=self.request.user)
@@ -47,6 +49,8 @@ class CustomOfferViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return CustomOffer.objects.none()
         # Users can only see offers they sent or received
         return CustomOffer.objects.filter(
             models.Q(sender=self.request.user) | models.Q(receiver=self.request.user)

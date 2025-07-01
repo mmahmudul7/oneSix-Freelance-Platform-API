@@ -1,5 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from users.models import User, Portfolio
 from users.serializers import UserSerializer, PortfolioSerializer
 from rest_framework.decorators import action
@@ -13,6 +13,8 @@ class UserProfileViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return User.objects.none()
         # Allow users to view their own profile, admins can view all
         if self.request.user.is_staff:
             return User.objects.all()
@@ -63,6 +65,8 @@ class PortfolioViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Portfolio.objects.none()
         # Users can view their own portfolio, admins can view all
         if self.request.user.is_staff:
             return Portfolio.objects.all()

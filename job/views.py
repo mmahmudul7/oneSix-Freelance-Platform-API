@@ -26,6 +26,11 @@ class JobViewSet(ModelViewSet):
     ordering_fields = ['price', 'average_rating', 'total_orders']
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Job.objects.none()
+        return Job.objects.select_related('category', 'created_by').prefetch_related('images')
+
     def perform_create(self, serializer):
         job = serializer.save(created_by=self.request.user)
         # Send notification to job creator
@@ -90,6 +95,8 @@ class JobImageViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return JobImage.objects.none()
         return JobImage.objects.filter(job_id=self.kwargs['job_pk'])
     
     def perform_create(self, serializer):
@@ -119,7 +126,11 @@ class ReviewViewSet(ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Review.objects.none()
         return Review.objects.filter(job_id=self.kwargs['job_pk'])
 
     def get_serializer_context(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return {}
         return {'job_id': self.kwargs['job_pk']}
