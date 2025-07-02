@@ -20,6 +20,9 @@ class MessageViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return Message.objects.none()
         # Users can only see messages they sent or received
+        user = self.request.user
+        if not user.is_authenticated:
+            return Message.objects.none()
         return Message.objects.filter(
             models.Q(sender=self.request.user) | models.Q(receiver=self.request.user)
         ).select_related('sender', 'receiver', 'job')
@@ -52,6 +55,9 @@ class CustomOfferViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return CustomOffer.objects.none()
         # Users can only see offers they sent or received
+        user = self.request.user
+        if not user.is_authenticated:
+            return CustomOffer.objects.none()
         return CustomOffer.objects.filter(
             models.Q(sender=self.request.user) | models.Q(receiver=self.request.user)
         ).select_related('job', 'sender', 'receiver')

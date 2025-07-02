@@ -147,6 +147,8 @@ class OrderDeliveryViewSet(ModelViewSet):
             return OrderDelivery.objects.none()
         
         user = self.request.user
+        if not user.is_authenticated:
+            return OrderDelivery.objects.none()
         return OrderDelivery.objects.filter(
             models.Q(order__user=user) | models.Q(delivered_by=user)
         ).select_related('order', 'delivered_by')

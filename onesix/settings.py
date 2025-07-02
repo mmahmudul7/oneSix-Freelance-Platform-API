@@ -149,6 +149,17 @@ DJOSER = {
     }
 }
 
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Enter your JWT token in the formart: `JWT <Your Token>`'
+        }
+    }
+}
+
 
 # Email configuration for notifications
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Use SMTP in production
