@@ -2,10 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 from job.validators import validate_file_size
-# from cloudinary.models import CloudinaryField
 
-
-# Create your models here.
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -35,34 +32,35 @@ class Job(models.Model):
 
     class Meta:
         ordering = ['-id',]
+        indexes = [
+            models.Index(fields=['name', 'description', 'category']),
+        ]
 
     def __str__(self):
         return self.name
     
     @property
-    def average_rating(self):  # Added for ranking by average review rating
+    def average_rating(self):
         reviews = self.reviews.all()
         if reviews:
             return sum(review.ratings for review in reviews) / reviews.count()
         return 0
 
     @property
-    def total_orders(self):  # Added for ranking by number of orders
+    def total_orders(self):
         return self.order_items.count()
 
 
 class JobImage(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to="jobs/images/", validators=[validate_file_size])
-    # file = models.FileField(upload_to="jobs/files", validators=[FileExtensionValidator(['pdf'])])
-    # image = CloudinaryField('image')
 
     def __str__(self):
         return f"Image for {self.job.name}"
 
 
 class Review(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     ratings = models.PositiveIntegerField(
         validators=[
@@ -73,6 +71,11 @@ class Review(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['job', 'created_at']),
+        ]
 
     def __str__(self):
         return f"Review for {self.job.name} by {self.user}"

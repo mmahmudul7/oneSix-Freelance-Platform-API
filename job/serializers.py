@@ -12,7 +12,6 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'job_count']
 
     def validate_name(self, value):
-        # Ensure category name is unique
         if Category.objects.filter(name=value).exists():
             raise serializers.ValidationError("A category with this name already exists.")
         return value
@@ -37,6 +36,14 @@ class JobSerializer(serializers.ModelSerializer):
     price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
     average_rating = serializers.ReadOnlyField()
     total_orders = serializers.ReadOnlyField()
+
+    def validate(self, data):
+        # All required fields are provided
+        required_fields = ['name', 'description', 'price', 'category', 'duration_days']
+        for field in required_fields:
+            if field not in data or data[field] is None:
+                raise serializers.ValidationError({field: f"{field} is required."})
+        return data
 
     def validate_duration_days(self, value):
         if value < 1:
@@ -70,14 +77,19 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(method_name='get_user')
+    reviewer_role = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
-        fields = ['id', 'user', 'job', 'ratings', 'comment']
-        read_only_fields = ['user', 'job']
+        fields = ['id', 'user', 'job', 'ratings', 'comment', 'reviewer_role']
+        read_only_fields = ['user', 'job', 'reviewer_role']
 
     def get_user(self, obj):
         return SimpleUserSerializer(obj.user).data
+    
+    def get_reviewer_role(self, obj):
+        order = obj.job.order_items.filter(buyer=obj.user, is_completed=True).first()
+        return 'buyer' if order else 'seller'
 
     def create(self, validated_data):
         job_id = self.context['job_id']
@@ -91,6 +103,7 @@ class JobSearchSerializer(serializers.Serializer):  # job search
     max_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     min_rating = serializers.FloatField(required=False)
     max_duration_days = serializers.IntegerField(required=False)
+    creator_email = serializers.CharField(required=False, allow_blank=True)
     sort_by = serializers.ChoiceField(
         choices=['price_asc', 'price_desc', 'rating_desc', 'orders_desc'],
         required=False
