@@ -36,14 +36,13 @@ class CartItemViewSet(ModelViewSet):
         return orderSz.CartItemSerializer
     
     def get_serializer_context(self):
+        context = super().get_serializer_context()
         if getattr(self, 'swagger_fake_view', False):
-            return {'request': self.request}
-        return {'cart_id': self.kwargs['cart_pk'], 'request': self.request}
+            return context
+        return {'cart_id': self.kwargs.get('cart_pk'), 'request': self.request}
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return CartItem.objects.none()
-        return CartItem.objects.select_related('job').filter(cart_id=self.kwargs['cart_pk'])
+        return CartItem.objects.select_related('job').filter(cart_id=self.kwargs.get('cart_pk'))
 
 
 class OrderViewSet(ModelViewSet):
@@ -51,6 +50,8 @@ class OrderViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Order.objects.none()
         if self.request.user.is_staff:
             return Order.objects.prefetch_related('items__job').all()
         return Order.objects.prefetch_related('items__job').filter(user=self.request.user)
@@ -65,6 +66,8 @@ class OrderViewSet(ModelViewSet):
         return orderSz.OrderSerializer
 
     def get_serializer_context(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return super().get_serializer_context()
         return {'user_id': self.request.user.id, 'user': self.request.user}
 
     def perform_create(self, serializer):

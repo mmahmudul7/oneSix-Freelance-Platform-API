@@ -14,6 +14,7 @@ from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Avg
+# from drf_yasg.utils import swagger_auto_schema
 
 
 class JobViewSet(ModelViewSet):
@@ -95,12 +96,10 @@ class JobImageViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return JobImage.objects.none()
-        return JobImage.objects.filter(job_id=self.kwargs['job_pk'])
+        return JobImage.objects.filter(job_id=self.kwargs.get('job_pk'))
     
     def perform_create(self, serializer):
-        serializer.save(job_id=self.kwargs['job_pk'])
+        serializer.save(job_id=self.kwargs.get('job_pk'))
 
 
 class CategoryViewSet(ModelViewSet):
@@ -126,11 +125,7 @@ class ReviewViewSet(ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return Review.objects.none()
-        return Review.objects.filter(job_id=self.kwargs['job_pk'])
+        return Review.objects.filter(job_id=self.kwargs.get('job_pk'))
 
     def get_serializer_context(self):
-        if getattr(self, 'swagger_fake_view', False):
-            return {}
-        return {'job_id': self.kwargs['job_pk']}
+        return {'job_id': self.kwargs.get('job_pk')}
