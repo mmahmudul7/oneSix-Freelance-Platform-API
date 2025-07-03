@@ -13,7 +13,6 @@ from django.db import models
 import logging
 from drf_yasg.utils import swagger_auto_schema
 
-
 # Setup logging
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,9 @@ class CartViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return Cart.objects.none()
         return Cart.objects.prefetch_related('items__job').filter(user=self.request.user)
-    
+
     @swagger_auto_schema(
+        operation_summary="List all carts",
         operation_description="Retrieve a list of carts for the authenticated user.",
         responses={
             200: orderSz.CartSerializer(many=True),
@@ -37,6 +37,7 @@ class CartViewSet(ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Create a new cart",
         operation_description="Create a new cart for the authenticated user.",
         request_body=orderSz.CartSerializer,
         responses={
@@ -52,6 +53,7 @@ class CartViewSet(ModelViewSet):
         serializer.save(user=self.request.user)
 
     @swagger_auto_schema(
+        operation_summary="Retrieve a cart",
         operation_description="Retrieve a specific cart by ID.",
         responses={
             200: orderSz.CartSerializer,
@@ -63,6 +65,7 @@ class CartViewSet(ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Update a cart",
         operation_description="Partially update a cart.",
         request_body=orderSz.CartSerializer,
         responses={
@@ -76,6 +79,7 @@ class CartViewSet(ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Delete a cart",
         operation_description="Delete a cart.",
         responses={
             204: "No Content",
@@ -105,8 +109,9 @@ class CartItemViewSet(ModelViewSet):
 
     def get_queryset(self):
         return CartItem.objects.select_related('job').filter(cart_id=self.kwargs.get('cart_pk'))
-    
+
     @swagger_auto_schema(
+        operation_summary="List cart items",
         operation_description="Retrieve a list of items in a specific cart.",
         responses={
             200: orderSz.CartItemSerializer(many=True),
@@ -118,6 +123,7 @@ class CartItemViewSet(ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Add a cart item",
         operation_description="Add an item to a specific cart.",
         request_body=orderSz.AddCartItemSerializer,
         responses={
@@ -131,6 +137,7 @@ class CartItemViewSet(ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Retrieve a cart item",
         operation_description="Retrieve a specific cart item.",
         responses={
             200: orderSz.CartItemSerializer,
@@ -142,6 +149,7 @@ class CartItemViewSet(ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Update a cart item",
         operation_description="Update the quantity of a cart item.",
         request_body=orderSz.UpdateCartItemSerializer,
         responses={
@@ -155,6 +163,7 @@ class CartItemViewSet(ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Delete a cart item",
         operation_description="Delete a cart item.",
         responses={
             204: "No Content",
@@ -190,8 +199,9 @@ class OrderViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return super().get_serializer_context()
         return {'user_id': self.request.user.id, 'user': self.request.user}
-    
+
     @swagger_auto_schema(
+        operation_summary="List all orders",
         operation_description="Retrieve a list of orders (all for staff, user-specific for others).",
         responses={
             200: orderSz.OrderSerializer(many=True),
@@ -202,6 +212,7 @@ class OrderViewSet(ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Create an order",
         operation_description="Create a new order from a cart.",
         request_body=orderSz.CreateOrderSerializer,
         responses={
@@ -220,6 +231,7 @@ class OrderViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        operation_summary="Retrieve an order",
         operation_description="Retrieve a specific order.",
         responses={
             200: orderSz.OrderSerializer,
@@ -231,6 +243,7 @@ class OrderViewSet(ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Update an order",
         operation_description="Partially update an order (admin only).",
         request_body=orderSz.UpdateOrderSerializer,
         responses={
@@ -245,6 +258,7 @@ class OrderViewSet(ModelViewSet):
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Delete an order",
         operation_description="Delete an order (admin only).",
         responses={
             204: "No Content",
@@ -257,6 +271,7 @@ class OrderViewSet(ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Cancel an order",
         operation_description="Cancel an order.",
         request_body=orderSz.EmptySerializer,
         responses={
@@ -273,6 +288,7 @@ class OrderViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        operation_summary="Start order progress",
         operation_description="Start progress on an order (job creator only).",
         request_body=orderSz.UpdateOrderSerializer,
         responses={
@@ -309,6 +325,7 @@ class OrderViewSet(ModelViewSet):
         return Response({'status': 'Order is now in progress'})
 
     @swagger_auto_schema(
+        operation_summary="Complete an order",
         operation_description="Complete an order (buyer only).",
         request_body=orderSz.UpdateOrderSerializer,
         responses={
@@ -319,7 +336,7 @@ class OrderViewSet(ModelViewSet):
             400: "Bad Request: Order must be delivered to complete."
         }
     )
-    @action(detail=True, methods=['post'])  # Added to allow buyer to complete order
+    @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         order = self.get_object()
         if request.user != order.user:
@@ -345,6 +362,7 @@ class OrderViewSet(ModelViewSet):
         return Response({'status': 'Order completed'})
 
     @swagger_auto_schema(
+        operation_summary="Update order status",
         operation_description="Update the status of an order (admin only).",
         request_body=orderSz.UpdateOrderSerializer,
         responses={
@@ -385,6 +403,7 @@ class OrderDeliveryViewSet(ModelViewSet):
         ).select_related('order', 'delivered_by')
 
     @swagger_auto_schema(
+        operation_summary="List all deliveries",
         operation_description="Retrieve a list of deliveries for the authenticated user (as buyer or deliverer).",
         responses={
             200: orderSz.OrderDeliverySerializer(many=True),
@@ -395,6 +414,7 @@ class OrderDeliveryViewSet(ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_summary="Create a delivery",
         operation_description="Create a delivery for an order (job creator only).",
         request_body=orderSz.OrderDeliverySerializer,
         responses={
@@ -406,7 +426,7 @@ class OrderDeliveryViewSet(ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-    
+
     def perform_create(self, serializer):
         with transaction.atomic():
             delivery = serializer.save(delivered_by=self.request.user)
@@ -420,12 +440,13 @@ class OrderDeliveryViewSet(ModelViewSet):
                     message=f'Dear {order.user.get_full_name() or order.user.email},\n\nYour order (ID: {order.id}) has been delivered by {self.request.user.get_full_name() or self.request.user.email}.\nDescription: {delivery.description}\nFile: {delivery.file.url if delivery.file else "No file"}',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[order.user.email],
-                    fail_silently=False,  # Updated: Changed to catch errors
+                    fail_silently=False,
                 )
             except Exception as e:
                 logger.error(f"Failed to send email for order {order.id} delivery: {str(e)}")
 
     @swagger_auto_schema(
+        operation_summary="Retrieve a delivery",
         operation_description="Retrieve a specific delivery.",
         responses={
             200: orderSz.OrderDeliverySerializer,
