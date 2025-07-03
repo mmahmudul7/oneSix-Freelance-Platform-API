@@ -21,6 +21,12 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
     
+    def get_full_name(self):
+        """
+        Return the user's full name for email notifications.
+        """
+        return f"{self.first_name} {self.last_name}".strip() or self.email
+    
     @property
     def average_rating(self):  # ranking by average review rating
         reviews = self.created_jobs.values('reviews__ratings').aggregate(avg_rating=models.Avg('reviews__ratings'))

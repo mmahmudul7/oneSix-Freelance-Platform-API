@@ -1,11 +1,12 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from users.models import User, Portfolio
-from users.serializers import UserSerializer, PortfolioSerializer
+from users.serializers import UserSerializer, PublicUserSerializer, PortfolioSerializer, FreelancerSearchSerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Avg, Count
 from rest_framework.exceptions import PermissionDenied
+from drf_yasg.utils import swagger_auto_schema
 
 
 class UserProfileViewSet(ModelViewSet):
@@ -15,30 +16,83 @@ class UserProfileViewSet(ModelViewSet):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return User.objects.none()
-        # Allow users to view their own profile, admins can view all
+        # Admins can view all profiles, authenticated users can view their own, public can view via retrieve
         if self.request.user.is_staff:
             return User.objects.all()
-        return User.objects.filter(id=self.request.user.id)
+        elif self.request.user.is_authenticated:
+            return User.objects.filter(id=self.request.user.id)
+        return User.objects.all()  # Allow public access for retrieve
 
-    def perform_update(self, serializer):
-        # Only allow users to update their own profile
+    def get_serializer_class(self):
+        # Use PublicUserSerializer for retrieve and search actions to hide sensitive fields
+        if self.action in ['retrieve', 'search']:
+            return PublicUserSerializer
+        return self.serializer_class
+
+    def get_permissions(self):
+        # Allow public access for retrieve and search actions
+        if self.action in ['retrieve', 'search']:
+            return [AllowAny()]
+        return super().get_permissions()
+
+    @swagger_auto_schema(
+        operation_summary="List user profiles",
+        operation_description="Retrieve a list of user profiles. Admins can view all profiles, authenticated users can only view their own.",
+        responses={
+            200: UserSerializer(many=True),
+            401: "Unauthorized"
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve user profile",
+        operation_description="Retrieve a specific user profile. Publicly accessible, but sensitive fields (e.g., email, phone_number) are excluded.",
+        responses={
+            200: PublicUserSerializer,
+            404: "Not found"
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Update user profile",
+        operation_description="Update a user profile. Users can only update their own profile.",
+        request_body=UserSerializer,
+        responses={
+            200: UserSerializer,
+            400: "Invalid data",
+            401: "Unauthorized",
+            403: "Permission denied"
+        }
+    )
+    def update(self, request, *args, **kwargs):
         if self.request.user != self.get_object():
             raise PermissionDenied("You can only update your own profile")
-        serializer.save()
+        return super().update(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'], permission_classes=[])  # Freelancer search
+    @swagger_auto_schema(
+        operation_summary="Search freelancers",
+        operation_description="Search freelancers by keyword, skills, location, minimum rating, or sort by rating, orders, or join date. Publicly accessible.",
+        query_serializer=FreelancerSearchSerializer,
+        responses={
+            200: PublicUserSerializer(many=True),  # Changed to PublicUserSerializer
+            400: "Invalid query parameters"
+        }
+    )
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def search(self, request):
-        serializer = UserSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
+        serializer = FreelancerSearchSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)  # Fixed typo: PublicUserSerializer to serializer
         data = serializer.validated_data
 
         queryset = User.objects.all()
 
-        # Apply filters
         if data.get('keyword'):
             queryset = queryset.filter(
-                Q(email__icontains=data['keyword']) |
-                Q(bio__icontains=data['keyword'])
+                Q(bio__icontains=data['keyword'])  # Removed email__icontains for public search
             )
         if data.get('skills'):
             queryset = queryset.filter(skills__contains=data['skills'])
@@ -47,7 +101,6 @@ class UserProfileViewSet(ModelViewSet):
         if data.get('min_rating'):
             queryset = queryset.annotate(avg_rating=Avg('created_jobs__reviews__ratings')).filter(avg_rating__gte=data['min_rating'])
 
-        # Apply sorting
         sort_by = data.get('sort_by')
         if sort_by == 'rating_desc':
             queryset = queryset.annotate(avg_rating=Avg('created_jobs__reviews__ratings')).order_by('-avg_rating')
@@ -67,23 +120,88 @@ class PortfolioViewSet(ModelViewSet):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Portfolio.objects.none()
-        # Users can view their own portfolio, admins can view all
+        # Allow public access for retrieve, authenticated users for others
         if self.request.user.is_staff:
             return Portfolio.objects.all()
-        return Portfolio.objects.filter(user=self.request.user)
+        elif self.request.user.is_authenticated:
+            return Portfolio.objects.filter(user=self.request.user)
+        return Portfolio.objects.all()  # Allow public access for retrieve
+
+    def get_permissions(self):
+        # Allow public access for retrieve action
+        if self.action == 'retrieve':
+            return [AllowAny()]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
     def perform_update(self, serializer):
-        # Only allow users to update their own portfolio
         if self.request.user != self.get_object().user:
             raise PermissionDenied("You can only update your own portfolio")
         serializer.save()
 
+    @swagger_auto_schema(
+        operation_summary="Create portfolio item",
+        operation_description="Create a new portfolio item for the authenticated user.",
+        request_body=PortfolioSerializer,
+        responses={
+            201: PortfolioSerializer,
+            400: "Invalid data",
+            401: "Unauthorized"
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="List portfolio items",
+        operation_description="Retrieve a list of portfolio items. Admins can view all, authenticated users can view their own.",
+        responses={
+            200: PortfolioSerializer(many=True),
+            401: "Unauthorized"
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve portfolio item",
+        operation_description="Retrieve a specific portfolio item. Publicly accessible.",
+        responses={
+            200: PortfolioSerializer,
+            404: "Not found"
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="Update portfolio item",
+        operation_description="Update a portfolio item. Users can only update their own portfolio items.",
+        request_body=PortfolioSerializer,
+        responses={
+            200: PortfolioSerializer,
+            400: "Invalid data",
+            401: "Unauthorized",
+            403: "Permission denied"
+        }
+    )
+    def update(self, request, *args, **kwargs):
+        if self.request.user != self.get_object().user:
+            raise PermissionDenied("You can only update your own portfolio")
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_summary="List user's portfolio",
+        operation_description="Retrieve all portfolio items for the authenticated user.",
+        responses={
+            200: PortfolioSerializer(many=True),
+            401: "Unauthorized"
+        }
+    )
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_portfolio(self, request):
-        portfolio = Portfolio.objects.filter(user=request.user)
+        portfolio = Portfolio.objects.filter(user=self.request.user)
         serializer = self.get_serializer(portfolio, many=True)
         return Response(serializer.data)
-    

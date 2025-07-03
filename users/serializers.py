@@ -1,6 +1,6 @@
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer, UserSerializer as BaseUserSerializer
 from rest_framework import serializers
-from users.models import User, Portfolio
+from users.models import Portfolio
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
@@ -13,6 +13,27 @@ class PortfolioSerializer(serializers.ModelSerializer):
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         fields = ['id', 'email', 'password', 'first_name', 'last_name', 'address', 'phone_number']
+
+
+class PublicUserSerializer(BaseUserSerializer):
+    """
+    Serializer for public user profile, excluding sensitive fields like email, phone_number, and address.
+    """
+    portfolio = PortfolioSerializer(many=True, read_only=True)
+    skills = serializers.ListField(child=serializers.CharField(), required=False)
+    average_rating = serializers.ReadOnlyField()
+    total_orders = serializers.ReadOnlyField()
+    location = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta(BaseUserSerializer.Meta):
+        fields = ['id', 'first_name', 'last_name', 'total_orders', 'average_rating', 'location', 'bio', 'profile_picture', 'skills', 'portfolio']
+        read_only_fields = ['portfolio']
+        ref_name = 'PublicUser'
+
+    def validate_skills(self, value):
+        if len(value) > 10:
+            raise serializers.ValidationError("You can add up to 10 skills.")
+        return value
 
 
 class UserSerializer(BaseUserSerializer):

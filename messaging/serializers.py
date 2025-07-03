@@ -26,7 +26,7 @@ class MessageSerializer(serializers.ModelSerializer):
             # Limit file size to 1024MB
             max_size = 1024 * 1024 * 1024  # 1 GB
             if value.size > max_size:
-                raise serializers.ValidationError("File size cannot exceed 10MB.")
+                raise serializers.ValidationError("File size cannot exceed 1GB.")
             # Optional: Validate file types (e.g., images, PDFs)
             allowed_types = ['image/jpeg', 'image/png', 'application/pdf']
             if value.content_type not in allowed_types:
