@@ -3,6 +3,7 @@ from order.models import Cart, CartItem, Order, OrderItem, OrderDelivery
 from job.models import Job
 from order.services import OrderService
 from users.serializers import UserSerializer
+from django.core.validators import FileExtensionValidator
 
 
 class EmptySerializer(serializers.Serializer):
@@ -114,7 +115,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['status']
+        fields = ['status', 'deadline']
         read_only_fields = ['user', 'total_price', 'created_at', 'updated_at']
 
 
@@ -124,7 +125,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'total_price', 'status', 'created_at', 'updated_at', 'items']
+        fields = ['id', 'user', 'total_price', 'status', 'deadline', 'created_at', 'updated_at', 'items']
         read_only_fields = ['user', 'created_at', 'updated_at']
 
 
@@ -136,6 +137,9 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
         model = OrderDelivery
         fields = ['id', 'order', 'file', 'description', 'delivered_by', 'delivered_at']
         read_only_fields = ['delivered_by', 'delivered_at']
+        validators = [
+            FileExtensionValidator(allowed_extensions=['pdf', 'zip', 'jpg', 'png'])
+        ]
 
     def validate(self, data):
         order = data['order']

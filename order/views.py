@@ -10,7 +10,12 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
 from django.db import models
+import logging
+from drf_yasg.utils import swagger_auto_schema
 
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 class CartViewSet(ModelViewSet):
     serializer_class = orderSz.CartSerializer
@@ -20,9 +25,66 @@ class CartViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return Cart.objects.none()
         return Cart.objects.prefetch_related('items__job').filter(user=self.request.user)
+    
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of carts for the authenticated user.",
+        responses={
+            200: orderSz.CartSerializer(many=True),
+            401: "Unauthorized: Authentication credentials were not provided."
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a new cart for the authenticated user.",
+        request_body=orderSz.CartSerializer,
+        responses={
+            201: orderSz.CartSerializer,
+            400: "Bad Request: Invalid data",
+            401: "Unauthorized: Authentication credentials were not provided."
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific cart by ID.",
+        responses={
+            200: orderSz.CartSerializer,
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart not found."
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Partially update a cart.",
+        request_body=orderSz.CartSerializer,
+        responses={
+            200: orderSz.CartSerializer,
+            400: "Bad Request: Invalid data",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart not found."
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Delete a cart.",
+        responses={
+            204: "No Content",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart not found."
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 class CartItemViewSet(ModelViewSet):
@@ -43,6 +105,65 @@ class CartItemViewSet(ModelViewSet):
 
     def get_queryset(self):
         return CartItem.objects.select_related('job').filter(cart_id=self.kwargs.get('cart_pk'))
+    
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of items in a specific cart.",
+        responses={
+            200: orderSz.CartItemSerializer(many=True),
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart not found."
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Add an item to a specific cart.",
+        request_body=orderSz.AddCartItemSerializer,
+        responses={
+            201: orderSz.AddCartItemSerializer,
+            400: "Bad Request: Invalid job ID or quantity.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart or job not found."
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific cart item.",
+        responses={
+            200: orderSz.CartItemSerializer,
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart item not found."
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Update the quantity of a cart item.",
+        request_body=orderSz.UpdateCartItemSerializer,
+        responses={
+            200: orderSz.UpdateCartItemSerializer,
+            400: "Bad Request: Invalid quantity.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart item not found."
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Delete a cart item.",
+        responses={
+            204: "No Content",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Cart item not found."
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
 
 class OrderViewSet(ModelViewSet):
@@ -69,6 +190,28 @@ class OrderViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return super().get_serializer_context()
         return {'user_id': self.request.user.id, 'user': self.request.user}
+    
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of orders (all for staff, user-specific for others).",
+        responses={
+            200: orderSz.OrderSerializer(many=True),
+            401: "Unauthorized: Authentication credentials were not provided."
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a new order from a cart.",
+        request_body=orderSz.CreateOrderSerializer,
+        responses={
+            201: orderSz.OrderSerializer,
+            400: "Bad Request: Invalid cart ID or empty cart.",
+            401: "Unauthorized: Authentication credentials were not provided."
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         cart_id = self.request.data.get('cart_id')
@@ -76,6 +219,52 @@ class OrderViewSet(ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific order.",
+        responses={
+            200: orderSz.OrderSerializer,
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Order not found."
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Partially update an order (admin only).",
+        request_body=orderSz.UpdateOrderSerializer,
+        responses={
+            200: orderSz.OrderSerializer,
+            400: "Bad Request: Invalid status.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: Only admin can update orders.",
+            404: "Not Found: Order not found."
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Delete an order (admin only).",
+        responses={
+            204: "No Content",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: Only admin can delete orders.",
+            404: "Not Found: Order not found."
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Cancel an order.",
+        request_body=orderSz.EmptySerializer,
+        responses={
+            200: orderSz.OrderSerializer,
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Order not found."
+        }
+    )
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         order = self.get_object()
@@ -83,6 +272,17 @@ class OrderViewSet(ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_description="Start progress on an order (job creator only).",
+        request_body=orderSz.UpdateOrderSerializer,
+        responses={
+            200: '{"status": "Order is now in progress"}',
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: Only the job creator can start progress on this order.",
+            404: "Not Found: Order not found.",
+            400: "Bad Request: Order must be in pending status to start progress."
+        }
+    )
     @action(detail=True, methods=['post'])
     def start_progress(self, request, pk=None):
         order = self.get_object()
@@ -95,16 +295,30 @@ class OrderViewSet(ModelViewSet):
         order.status = Order.IN_PROGRESS
         order.save()
         
-        send_mail(
-            subject=f'Order {order.id} In Progress',
-            message=f'Dear {order.user.get_full_name() or order.user.email},\n\nYour order (ID: {order.id}) is now in progress.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[order.user.email],
-            fail_silently=True,
-        )
+        try:
+            send_mail(
+                subject=f'Order {order.id} In Progress',
+                message=f'Dear {order.user.get_full_name() or order.user.email},\n\nYour order (ID: {order.id}) is now in progress.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[order.user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f"Failed to send email for order {order.id} start_progress: {str(e)}")
         
         return Response({'status': 'Order is now in progress'})
 
+    @swagger_auto_schema(
+        operation_description="Complete an order (buyer only).",
+        request_body=orderSz.UpdateOrderSerializer,
+        responses={
+            200: '{"status": "Order completed"}',
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: Only the buyer can complete this order.",
+            404: "Not Found: Order not found.",
+            400: "Bad Request: Order must be delivered to complete."
+        }
+    )
     @action(detail=True, methods=['post'])  # Added to allow buyer to complete order
     def complete(self, request, pk=None):
         order = self.get_object()
@@ -117,16 +331,30 @@ class OrderViewSet(ModelViewSet):
         order.save()
         
         job_creator = order.items.first().job.created_by
-        send_mail(
-            subject=f'Order {order.id} Completed',
-            message=f'Dear {job_creator.get_full_name() or job_creator.email},\n\nThe order (ID: {order.id}) has been marked as completed by {order.user.get_full_name() or order.user.email}.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[job_creator.email],
-            fail_silently=True,
-        )
+        try:
+            send_mail(
+                subject=f'Order {order.id} Completed',
+                message=f'Dear {job_creator.get_full_name() or job_creator.email},\n\nThe order (ID: {order.id}) has been marked as completed by {order.user.get_full_name() or order.user.email}.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[job_creator.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            logger.error(f"Failed to send email for order {order.id} completion: {str(e)}")
         
         return Response({'status': 'Order completed'})
 
+    @swagger_auto_schema(
+        operation_description="Update the status of an order (admin only).",
+        request_body=orderSz.UpdateOrderSerializer,
+        responses={
+            200: '{"status": "Order status updated to <status>"}',
+            400: "Bad Request: Invalid status.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: Only admin can update order status.",
+            404: "Not Found: Order not found."
+        }
+    )
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         order = self.get_object()
@@ -156,6 +384,29 @@ class OrderDeliveryViewSet(ModelViewSet):
             models.Q(order__user=user) | models.Q(delivered_by=user)
         ).select_related('order', 'delivered_by')
 
+    @swagger_auto_schema(
+        operation_description="Retrieve a list of deliveries for the authenticated user (as buyer or deliverer).",
+        responses={
+            200: orderSz.OrderDeliverySerializer(many=True),
+            401: "Unauthorized: Authentication credentials were not provided."
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a delivery for an order (job creator only).",
+        request_body=orderSz.OrderDeliverySerializer,
+        responses={
+            201: orderSz.OrderDeliverySerializer,
+            400: "Bad Request: Invalid order or delivery data.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Order not found."
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
     def perform_create(self, serializer):
         with transaction.atomic():
             delivery = serializer.save(delivered_by=self.request.user)
@@ -163,10 +414,24 @@ class OrderDeliveryViewSet(ModelViewSet):
             order.status = Order.DELIVERED
             order.save()
             
-            send_mail(
-                subject=f'Order {order.id} Delivered',
-                message=f'Dear {order.user.get_full_name() or order.user.email},\n\nYour order (ID: {order.id}) has been delivered by {self.request.user.get_full_name() or self.request.user.email}.\nDescription: {delivery.description}\nFile: {delivery.file.url if delivery.file else "No file"}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.user.email],
-                fail_silently=True,
-            )
+            try:
+                send_mail(
+                    subject=f'Order {order.id} Delivered',
+                    message=f'Dear {order.user.get_full_name() or order.user.email},\n\nYour order (ID: {order.id}) has been delivered by {self.request.user.get_full_name() or self.request.user.email}.\nDescription: {delivery.description}\nFile: {delivery.file.url if delivery.file else "No file"}',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[order.user.email],
+                    fail_silently=False,  # Updated: Changed to catch errors
+                )
+            except Exception as e:
+                logger.error(f"Failed to send email for order {order.id} delivery: {str(e)}")
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific delivery.",
+        responses={
+            200: orderSz.OrderDeliverySerializer,
+            401: "Unauthorized: Authentication credentials were not provided.",
+            404: "Not Found: Delivery not found."
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
