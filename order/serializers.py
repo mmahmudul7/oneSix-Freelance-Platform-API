@@ -149,3 +149,10 @@ class OrderDeliverySerializer(serializers.ModelSerializer):
         if order.status != Order.IN_PROGRESS:
             raise serializers.ValidationError("Order must be in progress to deliver.")
         return data
+    
+
+class CreateCustomOrderSerializer(serializers.Serializer):
+    job = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all())
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    delivery_days = serializers.IntegerField(min_value=1)
+    features = serializers.CharField(max_length=1000)

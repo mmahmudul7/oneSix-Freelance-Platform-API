@@ -385,6 +385,30 @@ class OrderViewSet(ModelViewSet):
         if self.action in ['update_status', 'destroy']:
             return [IsAdminUser()]
         return [IsAuthenticated()]
+    
+    @swagger_auto_schema(
+        operation_summary="Create a custom order",
+        operation_description="Create a custom order for a specific job with custom price, delivery days, and features. Validates that the user is not ordering their own job. Creates an order item and sends notifications to the buyer and job creator.",
+        request_body=orderSz.CreateCustomOrderSerializer,
+        responses={
+            201: orderSz.OrderSerializer,
+            400: "Bad Request: Invalid job, price, or delivery data.",
+            401: "Unauthorized: Authentication credentials were not provided.",
+            403: "Forbidden: You cannot order your own job."
+        }
+    )
+    @action(detail=False, methods=['post'])
+    def create_custom_order(self, request):
+        serializer = orderSz.CreateCustomOrderSerializer(data=request.data, context={'user': self.request.user})
+        serializer.is_valid(raise_exception=True)
+        order = OrderService.create_custom_order(
+            user=self.request.user,
+            job=serializer.validated_data['job'],
+            price=serializer.validated_data['price'],
+            delivery_days=serializer.validated_data['delivery_days'],
+            features=serializer.validated_data['features']
+        )
+        return Response(orderSz.OrderSerializer(order).data, status=201)
 
 
 class OrderDeliveryViewSet(ModelViewSet):

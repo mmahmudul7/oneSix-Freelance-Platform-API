@@ -8,6 +8,26 @@ from django.conf import settings
 class OrderService:
     @staticmethod
     def create_order(user, cart_id):
+        """
+        Summary:
+            Create an order from a user's cart.
+
+        Description:
+            Validates that the cart belongs to the user and is not empty. Ensures the user is not ordering their own jobs.
+            Calculates the total price based on cart items, creates an order and associated order items,
+            sends email notifications to the buyer and job creators, and deletes the cart.
+
+        Args:
+            user: The authenticated user creating the order.
+            cart_id: The ID of the cart to convert into an order.
+
+        Returns:
+            Order: The created order object.
+
+        Raises:
+            PermissionDenied: If the cart does not belong to the user.
+            ValidationError: If the cart is empty or contains the user's own jobs.
+        """
         with transaction.atomic():
             cart = Cart.objects.get(pk=cart_id)
             if cart.user != user:
@@ -66,6 +86,28 @@ class OrderService:
 
     @staticmethod
     def create_custom_order(user, job, price, delivery_days, features):
+        """
+        Summary:
+            Create a custom order for a specific job.
+
+        Description:
+            Creates a custom order for a job with a specified price, delivery days, and features.
+            Validates that the user is not ordering their own job. Creates an order with a single order item
+            and sends email notifications to the buyer and job creator.
+
+        Args:
+            user: The authenticated user creating the order.
+            job: The job object being ordered.
+            price: The custom price for the order.
+            delivery_days: The number of days for delivery.
+            features: A description of the custom features included in the order.
+
+        Returns:
+            Order: The created order object.
+
+        Raises:
+            ValidationError: If the user attempts to order their own job.
+        """
         with transaction.atomic():
             if job.created_by == user:
                 raise ValidationError("You cannot order your own job.")
@@ -104,6 +146,25 @@ class OrderService:
         
     @staticmethod
     def cancel_order(order, user):
+        """
+        Summary:
+            Cancel an existing order.
+
+        Description:
+            Allows admins to cancel any order or users to cancel their own non-completed orders.
+            Updates the order status to CANCELED.
+
+        Args:
+            order: The order object to cancel.
+            user: The authenticated user attempting to cancel the order.
+
+        Returns:
+            Order: The updated order object with CANCELED status.
+
+        Raises:
+            PermissionDenied: If a non-admin user tries to cancel someone else's order.
+            ValidationError: If the order is already completed.
+        """
         if user.is_staff:
             order.status = Order.CANCELED
             order.save()
