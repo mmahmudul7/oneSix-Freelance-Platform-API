@@ -5,7 +5,7 @@
         "config": {"maxLambdaSize": "15mb", "runtime": "python3.13.1"}
     }],
     "routes": [{
-        "scr": "/(.*)",
+        "src": "/(.*)",
         "dest": "onesix/wsgi.py"
     }]
 }
