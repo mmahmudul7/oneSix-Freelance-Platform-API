@@ -14,8 +14,8 @@ from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, Avg
+from django.db.models.functions import Coalesce
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from order.models import Order
 from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 
@@ -49,12 +49,13 @@ class JobViewSet(ModelViewSet):
         if getattr(self, 'swagger_fake_view', False):
             return Job.objects.none()
         # return Job.objects.select_related('category', 'created_by').prefetch_related('images')
-        return Job.objects.select_related('category', 'created_by')\
-            .prefetch_related('images')\
-            .annotate(
-                avg_rating=Avg('reviews__ratings'),
-                order_count=Count('order_items')
-            )
+        queryset = Job.objects.all().select_related('price', 'category', 'created_by') \
+                        .prefetch_related('images') \
+                        .annotate(
+                            average_rating_db=Coalesce(Avg('reviews__ratings'), 0.0),
+                            order_count=Count('order_items', distinct=True)
+                        )
+        return queryset
     
     @swagger_auto_schema(
         operation_summary="Retrieve a list of jobs",

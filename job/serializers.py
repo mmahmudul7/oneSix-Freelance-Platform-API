@@ -35,7 +35,8 @@ class JobSerializer(serializers.ModelSerializer):
     images = JobImageSerializer(many=True, read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
     price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
-    average_rating = serializers.ReadOnlyField()
+    # average_rating = serializers.ReadOnlyField()
+    average_rating = serializers.FloatField(source='average_rating_db', read_only=True)
     order_count = serializers.ReadOnlyField()
 
     def validate(self, data):
