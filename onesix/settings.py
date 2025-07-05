@@ -207,15 +207,14 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
+        'console': {
             'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            # 'filename': 'debug.log',
+            'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         '': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': True,
         },
