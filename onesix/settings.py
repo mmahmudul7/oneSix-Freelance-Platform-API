@@ -73,7 +73,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'onesix.wsgi.application'
+WSGI_APPLICATION = 'onesix.wsgi.app'
 
 INTERNAL_IPS = ['127.0.0.1',]
 
