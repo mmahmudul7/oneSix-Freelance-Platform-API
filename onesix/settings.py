@@ -210,7 +210,7 @@ LOGGING = {
         'file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            # 'filename': 'debug.log',
         },
     },
     'loggers': {
