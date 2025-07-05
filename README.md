@@ -103,7 +103,7 @@ oneSix is a backend API for a freelancing platform where users can register, cre
 | `/api/v1/message/` | GET, POST | List or create messages | JWT |
 | `/api/v1/custom-offers/` | GET, POST | List or create custom offers | JWT |
 
-*Note*: Authentication endpoints (e.g., `/api/v1/auth/`) are handled by Djoser and excluded from this list. Visit `http://127.0.0.1:8000/swagger/` for full details.
+*Note*: Authentication endpoints (e.g., `/api/v1/auth/`) are handled by Djoser and excluded from this list. Visit `http://127.0.0.1:8000/swagger/` or `http://127.0.0.1:8000/redoc/` for full details.
 
 ## Testing
 1. **Register a User**:

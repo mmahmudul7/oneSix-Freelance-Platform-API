@@ -1,5 +1,10 @@
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,10 +79,22 @@ INTERNAL_IPS = ['127.0.0.1',]
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('dbname'),
+        'USER': config('user'),
+        'PASSWORD': config('password'),
+        'HOST': config('host'),
+        'PORT': config('port')
     }
 }
 
@@ -103,6 +120,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
+
+# Configuration for cloudinary storage    
+cloudinary.config( 
+    cloud_name = config('cloud_name'), 
+    api_key = config('api_key'), 
+    api_secret = config('api_secret'),
+    secure=True
+)
+
+# Media sotrage setting 
+DEFAULT_FILE_STORAGE = 'cloundinary_storage.storage.MediaCloundinaryStorage'
 
 LANGUAGE_CODE = 'en-us'
 

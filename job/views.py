@@ -347,11 +347,16 @@ class ReviewViewSet(ModelViewSet):
     def perform_create(self, serializer):
         job = Job.objects.get(pk=self.kwargs['job_pk'])
         user = self.request.user
-        order = Order.objects.filter(
-            Q(job=job) & Q(is_completed=True) & (Q(buyer=user) | Q(job__created_by=user))
+
+        # Check if user is either buyer or seller of a completed order for this job
+        order_item = job.order_items.filter(
+            Q(order__is_completed=True) &
+            (Q(order__user=user) | Q(freelancer=user))
         ).first()
-        if not order:
+
+        if not order_item:
             raise ValidationError("Only buyers or sellers of a completed order can review this job")
+
         serializer.save(user=user, job=job)
 
     def perform_update(self, serializer):

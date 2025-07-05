@@ -18,6 +18,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class JobImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField()
     class Meta:
         model = JobImage
         fields = ['id', 'image']
@@ -88,8 +89,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         return SimpleUserSerializer(obj.user).data
     
     def get_reviewer_role(self, obj):
-        order = obj.job.order_items.filter(buyer=obj.user, is_completed=True).first()
+        order = obj.job.order_items.filter(order__user=obj.user, order__is_completed=True).first()
         return 'buyer' if order else 'seller'
+
 
     def create(self, validated_data):
         job_id = self.context['job_id']
