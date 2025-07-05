@@ -36,7 +36,7 @@ class JobSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
     price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
     average_rating = serializers.ReadOnlyField()
-    total_orders = serializers.ReadOnlyField()
+    order_count = serializers.ReadOnlyField()
 
     def validate(self, data):
         # All required fields are provided
@@ -53,8 +53,8 @@ class JobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Job
-        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'total_orders', 'created_at', 'updated_at']
-        read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price', 'average_rating', 'total_orders']
+        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'order_count', 'created_at', 'updated_at']
+        read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price', 'average_rating', 'order_count']
 
     def calculate_cart(self, job):
         return round(job.price.price * Decimal(1.16), 2)

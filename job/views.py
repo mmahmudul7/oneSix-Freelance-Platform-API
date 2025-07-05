@@ -28,13 +28,13 @@ class JobViewSet(ModelViewSet):
      - Supports searching by name, description, and category
      - Supports ordering by price, average rating, and total orders
     """
-    queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images')
+    # queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images')
     serializer_class = JobSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = JobFilter
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
-    ordering_fields = ['price', 'average_rating', 'total_orders']
+    ordering_fields = ['price', 'average_rating', 'order_count']
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
@@ -48,7 +48,13 @@ class JobViewSet(ModelViewSet):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Job.objects.none()
-        return Job.objects.select_related('category', 'created_by').prefetch_related('images')
+        # return Job.objects.select_related('category', 'created_by').prefetch_related('images')
+        return Job.objects.select_related('category', 'created_by')\
+            .prefetch_related('images')\
+            .annotate(
+                avg_rating=Avg('reviews__ratings'),
+                order_count=Count('order_items')
+            )
     
     @swagger_auto_schema(
         operation_summary="Retrieve a list of jobs",
@@ -135,10 +141,11 @@ class JobViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images').annotate(
-            avg_rating=Avg('reviews__ratings'),
-            total_orders=Count('order_items')
-        )
+        # queryset = Job.objects.select_related('category', 'created_by').prefetch_related('images').annotate(
+        #     avg_rating=Avg('reviews__ratings'),
+        #     total_orders=Count('order_items')
+        # )
+        queryset = self.get_queryset()
 
         # Apply filters
         if data.get('keyword'):
