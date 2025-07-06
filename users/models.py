@@ -29,15 +29,6 @@ class User(AbstractUser):
         """
         return f"{self.first_name} {self.last_name}".strip() or self.email
     
-    @property
-    def average_rating(self):  # ranking by average review rating
-        reviews = self.created_jobs.values('reviews__ratings').aggregate(avg_rating=models.Avg('reviews__ratings'))
-        return reviews['avg_rating'] or 0
-
-    @property
-    def total_orders(self):  # ranking by number of orders
-        return self.created_jobs.annotate(order_count=models.Count('order_items')).aggregate(total=models.Sum('order_count'))['total'] or 0 
-    
 
 class Portfolio(models.Model):
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='portfolio')
@@ -50,3 +41,8 @@ class Portfolio(models.Model):
 
     def __str__(self):
         return f"{self.title} by {self.user}"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user_id']),
+        ]

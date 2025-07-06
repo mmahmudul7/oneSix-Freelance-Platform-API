@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.db.models import Q, Avg, Count
 from rest_framework.exceptions import PermissionDenied
 from drf_yasg.utils import swagger_auto_schema
+from django.db.models import Prefetch
 
 
 class UserProfileViewSet(ModelViewSet):
@@ -16,12 +17,17 @@ class UserProfileViewSet(ModelViewSet):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return User.objects.none()
-        # Admins can view all profiles, authenticated users can view their own, public can view via retrieve
+        
+        base_qs = User.objects.annotate(
+            total_orders=Count('created_jobs__order_items', distinct=True),
+            average_rating=Avg('created_jobs__reviews__ratings')
+        ).prefetch_related(Prefetch('portfolio', queryset=Portfolio.objects.all()))
+
         if self.request.user.is_staff:
-            return User.objects.all()
+            return base_qs
         elif self.request.user.is_authenticated:
-            return User.objects.filter(id=self.request.user.id)
-        return User.objects.all()  # Allow public access for retrieve
+            return base_qs.filter(id=self.request.user.id)
+        return base_qs
 
     def get_serializer_class(self):
         # Use PublicUserSerializer for retrieve and search actions to hide sensitive fields
@@ -78,21 +84,26 @@ class UserProfileViewSet(ModelViewSet):
         operation_description="Search freelancers by keyword, skills, location, minimum rating, or sort by rating, orders, or join date. Publicly accessible.",
         query_serializer=FreelancerSearchSerializer,
         responses={
-            200: PublicUserSerializer(many=True),  # Changed to PublicUserSerializer
+            200: PublicUserSerializer(many=True),
             400: "Invalid query parameters"
         }
     )
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def search(self, request):
         serializer = FreelancerSearchSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)  # Fixed typo: PublicUserSerializer to serializer
+        serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        queryset = User.objects.all()
+        portfolio_prefetch = Prefetch('portfolio',queryset=Portfolio.objects.select_related('user').all())
+
+        queryset = User.objects.annotate(
+            total_orders=Count('created_jobs__order_items', distinct=True),
+            average_rating=Avg('created_jobs__reviews__ratings')
+        ).prefetch_related(portfolio_prefetch)
 
         if data.get('keyword'):
             queryset = queryset.filter(
-                Q(bio__icontains=data['keyword'])  # Removed email__icontains for public search
+                Q(bio__icontains=data['keyword'])
             )
         if data.get('skills'):
             queryset = queryset.filter(skills__contains=data['skills'])
@@ -109,7 +120,7 @@ class UserProfileViewSet(ModelViewSet):
         elif sort_by == 'created_at_desc':
             queryset = queryset.order_by('-date_joined')
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = PublicUserSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
@@ -120,7 +131,6 @@ class PortfolioViewSet(ModelViewSet):
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Portfolio.objects.none()
-        # Allow public access for retrieve, authenticated users for others
         if self.request.user.is_staff:
             return Portfolio.objects.all()
         elif self.request.user.is_authenticated:
@@ -128,7 +138,6 @@ class PortfolioViewSet(ModelViewSet):
         return Portfolio.objects.all()  # Allow public access for retrieve
 
     def get_permissions(self):
-        # Allow public access for retrieve action
         if self.action == 'retrieve':
             return [AllowAny()]
         return super().get_permissions()

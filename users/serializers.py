@@ -34,6 +34,12 @@ class PublicUserSerializer(BaseUserSerializer):
         if len(value) > 10:
             raise serializers.ValidationError("You can add up to 10 skills.")
         return value
+    
+    def get_average_rating(self, obj):
+        return getattr(obj, 'average_rating', 0)
+
+    def get_total_orders(self, obj):
+        return getattr(obj, 'total_orders', 0)
 
 
 class UserSerializer(BaseUserSerializer):
@@ -44,9 +50,16 @@ class UserSerializer(BaseUserSerializer):
     location = serializers.CharField(required=False, allow_blank=True)
 
     class Meta(BaseUserSerializer.Meta):
-        fields = ['id', 'email', 'first_name', 'last_name','total_orders', 'average_rating', 'location', 'phone_number', 'bio', 'profile_picture', 'skills', 'portfolio']
+        fields = ['id', 'email', 'first_name', 'last_name', 'total_orders', 'average_rating', 'location', 'phone_number', 'bio', 'profile_picture', 'skills', 'portfolio']
         read_only_fields = ['portfolio']
         ref_name = 'CustomUser'
+
+    def get_average_rating(self, obj):
+        return getattr(obj, 'average_rating', 0)
+
+    def get_total_orders(self, obj):
+        return getattr(obj, 'total_orders', 0)
+
 
     def validate_skills(self, value):
         if len(value) > 10:
