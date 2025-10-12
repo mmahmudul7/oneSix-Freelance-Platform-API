@@ -76,11 +76,29 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'onesix.wsgi.app'
+# WSGI_APPLICATION = 'onesix.wsgi.application'
 
+
+# --- CORS Settings ---
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://onesix.dev",
-    "https://localhost:5173",
+    "http://localhost:5173",
+    "https://www.onesix.dev",
+    "https://onesix-freelance-platform-client.vercel.app",
 ]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
 
 INTERNAL_IPS = ['127.0.0.1',]
 
@@ -139,7 +157,7 @@ cloudinary.config(
 )
 
 # Media sotrage setting 
-DEFAULT_FILE_STORAGE = 'cloundinary_storage.storage.MediaCloundinaryStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 LANGUAGE_CODE = 'en-us'
 
@@ -155,7 +173,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
