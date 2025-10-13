@@ -2,4 +2,4 @@ from rest_framework.pagination import PageNumberPagination
 
 
 class DefaultPagination(PageNumberPagination):
-    page_size = 9
+    page_size = 12
