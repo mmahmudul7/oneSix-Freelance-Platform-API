@@ -50,8 +50,8 @@ class UserSerializer(BaseUserSerializer):
     location = serializers.CharField(required=False, allow_blank=True)
 
     class Meta(BaseUserSerializer.Meta):
-        fields = ['id', 'email', 'first_name', 'last_name', 'total_orders', 'average_rating', 'location', 'phone_number', 'bio', 'profile_picture', 'skills', 'portfolio']
-        read_only_fields = ['portfolio']
+        fields = ['id', 'email', 'first_name', 'last_name', 'total_orders', 'average_rating', 'location', 'phone_number', 'bio', 'profile_picture', 'skills', 'portfolio', 'is_staff']
+        read_only_fields = ['is_staff', 'portfolio']
         ref_name = 'CustomUser'
 
     def get_average_rating(self, obj):
