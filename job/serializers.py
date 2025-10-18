@@ -2,6 +2,8 @@ from rest_framework import serializers
 from decimal import Decimal
 from job.models import Category, Job, Review, JobImage, JobPrice
 from django.contrib.auth import get_user_model
+from users.serializers import PublicUserSerializer
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -36,9 +38,9 @@ class JobSerializer(serializers.ModelSerializer):
     images = JobImageSerializer(many=True, read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
     price = serializers.PrimaryKeyRelatedField(queryset=JobPrice.objects.all(), required=True)
-    # average_rating = serializers.ReadOnlyField()
     average_rating = serializers.FloatField(source='average_rating_db', read_only=True)
     order_count = serializers.ReadOnlyField()
+    created_by = PublicUserSerializer(read_only=True)
 
     def validate(self, data):
         # All required fields are provided
@@ -55,7 +57,7 @@ class JobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Job
-        fields = ['category_name','id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'order_count', 'created_at', 'updated_at']
+        fields = ['category_name','id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'order_count', 'created_at', 'updated_at', 'created_by']
         read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price', 'average_rating', 'order_count']
 
     def calculate_cart(self, job):

@@ -21,14 +21,18 @@ class PublicUserSerializer(BaseUserSerializer):
     """
     portfolio = PortfolioSerializer(many=True, read_only=True)
     skills = serializers.ListField(child=serializers.CharField(), required=False)
-    average_rating = serializers.ReadOnlyField()
-    total_orders = serializers.ReadOnlyField()
+    average_rating = serializers.FloatField(read_only=True)
+    total_orders = serializers.IntegerField(read_only=True)
     location = serializers.CharField(required=False, allow_blank=True)
+    full_name = serializers.SerializerMethodField()
 
     class Meta(BaseUserSerializer.Meta):
-        fields = ['id', 'first_name', 'last_name', 'total_orders', 'average_rating', 'location', 'bio', 'profile_picture', 'skills', 'portfolio']
-        read_only_fields = ['portfolio']
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'total_orders', 'average_rating', 'location', 'bio', 'profile_picture', 'skills', 'portfolio']
+        read_only_fields = ['portfolio', 'average_rating', 'total_orders']
         ref_name = 'PublicUser'
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()
 
     def validate_skills(self, value):
         if len(value) > 10:
