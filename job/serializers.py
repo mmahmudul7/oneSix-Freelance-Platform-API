@@ -31,6 +31,7 @@ class JobPriceSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
     cart_price = serializers.SerializerMethodField(method_name='calculate_cart')
     images = JobImageSerializer(many=True, read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), required=True)
@@ -54,7 +55,7 @@ class JobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Job
-        fields = ['id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'order_count', 'created_at', 'updated_at']
+        fields = ['category_name','id', 'name', 'description', 'price', 'category', 'cart_price', 'images', 'created_by', 'duration_days', 'average_rating', 'order_count', 'created_at', 'updated_at']
         read_only_fields = ['created_by', 'created_at', 'updated_at', 'cart_price', 'average_rating', 'order_count']
 
     def calculate_cart(self, job):
