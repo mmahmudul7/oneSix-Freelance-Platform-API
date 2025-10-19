@@ -34,7 +34,7 @@ class JobViewSet(ModelViewSet):
     filterset_class = JobFilter
     pagination_class = DefaultPagination
     search_fields = ['name', 'description']
-    ordering_fields = ['price', 'average_rating', 'order_count']
+    ordering_fields = ['price', 'cart_price', 'average_rating', 'order_count']
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
