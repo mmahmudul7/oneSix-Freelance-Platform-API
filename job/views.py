@@ -170,9 +170,9 @@ class JobViewSet(ModelViewSet):
         # Apply sorting
         sort_by = data.get('sort_by')
         if sort_by == 'price_asc':
-            queryset = queryset.order_by('price__price')
+            queryset = queryset.order_by('cart_price')
         elif sort_by == 'price_desc':
-            queryset = queryset.order_by('-price__price')
+            queryset = queryset.order_by('-cart_price')
         elif sort_by == 'rating_desc':
             queryset = queryset.annotate(avg_rating=Avg('reviews__ratings')).order_by('-avg_rating')
         elif sort_by == 'orders_desc':
