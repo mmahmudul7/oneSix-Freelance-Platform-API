@@ -12,6 +12,7 @@ from django.db import transaction
 from django.db import models
 import logging
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -46,7 +47,14 @@ class CartViewSet(ModelViewSet):
             401: "Unauthorized: Authentication credentials were not provided."
         }
     )
+    
     def create(self, request, *args, **kwargs):
+        existing_cart = Cart.objects.filter(user=request.user).first()
+
+        if existing_cart:
+            serializer = self.get_serializer(existing_cart)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
