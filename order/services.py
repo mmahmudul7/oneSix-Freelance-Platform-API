@@ -42,7 +42,7 @@ class OrderService:
                 if item.job.created_by_id == user:
                     raise ValidationError(f"You cannot order your own job: {item.job.name}")
 
-            total_price = sum([item.job.price * item.quantity for item in cart_items])
+            total_price = sum([item.job.price.price * item.quantity for item in cart_items])
 
             order = Order.objects.create(user_id=user, total_price=total_price)
 
@@ -50,9 +50,9 @@ class OrderService:
                 OrderItem(
                     order = order,
                     job = item.job,
-                    price = item.job.price,
+                    price = item.job.price.price,
                     quantity = item.quantity,
-                    total_price = item.job.price * item.quantity
+                    total_price = item.job.price.price * item.quantity
                 )
                 for item in cart_items
             ]

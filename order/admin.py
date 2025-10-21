@@ -14,7 +14,7 @@ class CartItemInline(admin.TabularInline):
 
     def total_price(self, obj):
         """Calculate total price for a cart item."""
-        return obj.quantity * obj.job.price
+        return obj.quantity * obj.job.price.price
     total_price.short_description = 'Total Price'
 
 @admin.register(Cart)
@@ -31,7 +31,7 @@ class CartAdmin(admin.ModelAdmin):
 
     def total_price(self, obj):
         """Calculate total price of all items in the cart."""
-        return sum(item.quantity * item.job.price for item in obj.items.all())
+        return sum(item.quantity * item.job.price.price for item in obj.items.all())
     total_price.short_description = 'Total Price'
 
 # Inline for OrderItem inside Order

@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from order.models import Cart, CartItem, Order, OrderItem, OrderDelivery
 from job.models import Job
+from job.serializers import JobSerializer
 from order.services import OrderService
 from users.serializers import UserSerializer
 from django.core.validators import FileExtensionValidator
+from decimal import Decimal
 
 
 class EmptySerializer(serializers.Serializer):
@@ -62,20 +64,35 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'job', 'quantity', 'total_price']
 
     def get_total_price(self, cart_item: CartItem):
-        return cart_item.quantity * cart_item.job.price
+        return cart_item.quantity * cart_item.job.price.price
+
+
+class CartItemDetailSerializer(serializers.ModelSerializer):
+    job = JobSerializer(read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'job', 'quantity', 'total_price']
+
+    def get_total_price(self, obj):
+        return round(obj.quantity * obj.job.price.price * Decimal(1.16), 2)
 
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
-    total_price = serializers.SerializerMethodField(method_name='get_total_price')
+    items = CartItemDetailSerializer(many=True, read_only=True)
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'items', 'total_price', 'created_at']
-        read_only_fields = ['user', 'created_at']
+        fields = ['id', 'items', 'total_price']
 
-    def get_total_price(self, cart: Cart):
-        return sum([item.job.price * item.quantity for item in cart.items.all()])
+    def get_total_price(self, cart):
+        total = Decimal(0) 
+        for item in cart.items.all():
+            price = item.job.price.price * Decimal(1.16)
+            total += item.quantity * price
+        return round(total, 2)
 
 
 class CreateOrderSerializer(serializers.Serializer):
