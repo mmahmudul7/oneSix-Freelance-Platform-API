@@ -184,8 +184,17 @@ class CartItemViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = orderSz.OrderSerializer
+
     http_method_names = ['get', 'post', 'delete', 'patch', 'head', 'options']
     permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        cart_id = request.data.get('cart_id')
+        order = OrderService.create_order(request.user, cart_id)
+        serializer = self.get_serializer(order)  # pass model instance
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -229,8 +238,8 @@ class OrderViewSet(ModelViewSet):
             401: "Unauthorized: Authentication credentials were not provided."
         }
     )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    # def create(self, request, *args, **kwargs):
+    #     return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         cart_id = self.request.data.get('cart_id')

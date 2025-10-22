@@ -53,6 +53,7 @@ class Order(models.Model):
         (CANCELED, 'Canceled'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
@@ -67,10 +68,13 @@ class Order(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
         if not self.deadline and self.items.exists():
             max_duration = max(item.job.duration_days for item in self.items.all())
             self.deadline = timezone.now().date() + timedelta(days=max_duration)
-        super().save(*args, **kwargs)
+            super().save(update_fields=['deadline']) 
+        
 
     def __str__(self):
         return f"Order {self.id} by {self.user.first_name} - {self.status}"
