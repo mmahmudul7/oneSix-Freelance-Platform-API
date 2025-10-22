@@ -123,10 +123,14 @@ class CreateOrderSerializer(serializers.Serializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     job = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all())
+    job_name = serializers.SerializerMethodField() 
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'job', 'price', 'quantity', 'total_price']
+        fields = ['id', 'job', 'job_name', 'price', 'quantity', 'total_price']
+
+    def get_job_name(self, obj):
+        return obj.job.name
 
 
 class UpdateOrderSerializer(serializers.ModelSerializer):
