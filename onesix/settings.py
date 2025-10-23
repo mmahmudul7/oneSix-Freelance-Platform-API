@@ -234,6 +234,9 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'admin@onesix.dev'
 
+BACKEND_URL = config("BACKEND_URL")
+FRONTEND_URL = config("FRONTEND_URL")
+
 
 LOGGING = {
     'version': 1,
