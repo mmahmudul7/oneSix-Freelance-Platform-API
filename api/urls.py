@@ -4,7 +4,7 @@ from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSe
 from order.views import CartViewSet, CartItemViewSet, OrderDeliveryViewSet, OrderViewSet, initiate_payment, payment_success, payment_fail, payment_cancel
 from users.views import UserProfileViewSet, PortfolioViewSet
 from messaging.views import MessageViewSet, CustomOfferViewSet
-# from djoser.views import UserViewSet
+from api.views import ContactView
 
 
 # Main router
@@ -47,4 +47,5 @@ urlpatterns = [
     path('payment/success/', payment_success, name='payment_success'),
     path('payment/fail/', payment_fail, name='payment-fail'),
     path('payment/cancel/', payment_cancel, name='payment-cancel'),
+    path("contact/", ContactView.as_view(), name="contact"),
 ]

@@ -448,7 +448,7 @@ def initiate_payment(request):
     sslcz = SSLCOMMERZ(settings)
     post_body = {}
     post_body['total_amount'] = float(amount)
-    post_body['currency'] = "BDT"
+    post_body['currency'] = "USD"
     post_body['tran_id'] = f"txn_{str(order_id)}"
     post_body['success_url'] = f"{main_settings.BACKEND_URL}/api/v1/payment/success/"
     post_body['fail_url'] = f"{main_settings.BACKEND_URL}/api/v1/payment/fail/"
@@ -469,7 +469,7 @@ def initiate_payment(request):
 
     response = sslcz.createSession(post_body) # API response
     print("SSLCommerz Response:", response)
-    
+
     if response.get("status") == 'SUCCESS':
         return Response({"payment_url": response['GatewayPageURL']})
     return Response({"error": "Payment initiation failed"}, status=status.HTTP_400_BAD_REQUEST)
