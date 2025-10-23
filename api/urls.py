@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 from job.views import JobViewSet, CategoryViewSet, ReviewViewSet, JobImageViewSet, JobPriceViewSet
-from order.views import CartViewSet, CartItemViewSet, OrderDeliveryViewSet, OrderViewSet
+from order.views import CartViewSet, CartItemViewSet, OrderDeliveryViewSet, OrderViewSet, initiate_payment
 from users.views import UserProfileViewSet, PortfolioViewSet
 from messaging.views import MessageViewSet, CustomOfferViewSet
 # from djoser.views import UserViewSet
@@ -43,4 +43,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('auth/', include('users.urls')),
+    path('payment/initiate/', initiate_payment, name='initiate_payment'),
 ]
